@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Logo } from "@/components/logo";
 import {
   Package,
   ShoppingBag,
@@ -64,12 +65,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Brand Logo */}
             <Link
               href="/admin"
-              className="flex items-center gap-2 font-extrabold text-slate-900 tracking-tight shrink-0"
+              className="flex items-center gap-2 tracking-tight shrink-0 transition-transform hover:scale-105"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 text-white text-sm shadow-brand">
-                👕
-              </span>
-              <span className="text-sm font-bold tracking-tight">Shirt Bazaar</span>
+              <Logo size="sm" showText={true} />
               <span className="rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                 Admin
               </span>

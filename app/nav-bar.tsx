@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ShoppingBag, User, ShieldCheck, Home, Menu, X } from "lucide-react";
 import { AISearchBar } from "./components/ai-search-bar";
+import { Logo } from "@/components/logo";
 import { usePathname } from "next/navigation";
 
 function NavLink({
@@ -85,9 +86,9 @@ export function NavBar() {
         {/* Brand Logo */}
         <Link
           href="/"
-          className="flex-shrink-0 font-display text-xl font-extrabold tracking-tight transition-transform hover:scale-105"
+          className="flex-shrink-0 transition-transform hover:scale-105 active:scale-95"
         >
-          <span className="gradient-text">Shirt Bazaar.</span>
+          <Logo size="md" />
         </Link>
 
         {/* Search (desktop) */}

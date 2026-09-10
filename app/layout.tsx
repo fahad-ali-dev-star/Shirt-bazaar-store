@@ -4,6 +4,7 @@ import "./globals.css";
 import { PromoBar } from "@/components/promo-bar";
 import { NavBar } from "./nav-bar";
 import { TopLoader } from "@/components/top-loader";
+import { Logo } from "@/components/logo";
 import Link from "next/link";
 
 const inter = Inter({
@@ -45,6 +46,14 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/logo.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -65,7 +74,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pb-12 border-b border-slate-100">
               {/* Brand */}
               <div>
-                <p className="text-2xl font-bold tracking-tight gradient-text mb-2">Shirt Bazaar.</p>
+                <Link href="/" className="inline-block mb-3">
+                  <Logo size="lg" />
+                </Link>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-xs">
                   Crafted with care, worn with pride. Premium cotton essentials designed for everyday comfort.
                 </p>

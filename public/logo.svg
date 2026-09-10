@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <defs>
+    <linearGradient id="logo-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6366F1"/>
+      <stop offset="0.5" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#312E81"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="40" height="40" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#4F46E5" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="40" height="40" rx="10" fill="url(#logo-grad)"/>
+  <path d="M28.38 12.46L24 11C23.47 12.74 21.88 14 20 14C18.12 14 16.53 12.74 16 11L11.62 12.46C10.82 12.73 10.27 13.48 10.28 14.33L10.86 17.8C10.95 18.3 11.38 18.67 11.89 18.67H14V27C14 28.1 14.9 29 16 29H24C25.1 29 26 28.1 26 27V18.67H28.15C28.66 18.67 29.09 18.3 29.18 17.8L29.76 14.33C29.77 13.48 29.22 12.73 28.42 12.46H28.38Z" fill="white"/>
+  <circle cx="20" cy="18" r="1.2" fill="#4F46E5"/>
+  <circle cx="20" cy="22" r="1.2" fill="#4F46E5"/>
+</svg>
