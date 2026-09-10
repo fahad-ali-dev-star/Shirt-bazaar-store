@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ─── */
+:root {
+  --brand-50:  #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-200: #c7d2fe;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --brand-900: #312e81;
+  --radius-card: 1.25rem;
+  --shadow-card: 0 2px 12px 0 rgb(0 0 0 / 0.06);
+  --shadow-card-hover: 0 8px 28px 0 rgb(79 70 229 / 0.14);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    @apply bg-[#f8f8fb] text-slate-900 antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  /* Better focus rings */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2;
+  }
+
+  /* Selection colour */
+  ::selection {
+    @apply bg-brand-100 text-brand-900;
+  }
+}
+
+/* ─── Component Utilities ─── */
+@layer utilities {
+  /* Glassmorphism navbar */
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl border-b border-white/40 shadow-sm;
+  }
+
+  /* Gradient brand text */
+  .gradient-text {
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #6366f1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card base */
+  .card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-[0_8px_28px_0_rgb(79_70_229_/_0.12)] hover:-translate-y-0.5;
+  }
+
+  /* Shimmer skeleton */
+  .shimmer {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Input base style */
+  .input-base {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all;
+    @apply hover:border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  /* Button primary */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition-all;
+    @apply hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-600/20 active:scale-[0.98];
+  }
+
+  /* Button secondary */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition-all;
+    @apply hover:border-brand-500 hover:text-brand-600 active:scale-[0.98];
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-300;
+  }
+
+  /* Scrollbar hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Dot ping */
+  .dot-ping {
+    @apply relative inline-flex;
+  }
+  .dot-ping::before {
+    content: '';
+    @apply absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75;
+  }
+}
+
+/* ─── Keyframes ─── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
