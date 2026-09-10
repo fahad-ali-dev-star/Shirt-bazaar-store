@@ -5,6 +5,7 @@ import { useCart } from "@/lib/store/cart";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Lock, ChevronRight, Tag, Copy, Check, Smartphone, Info } from "lucide-react";
 import { WALLET_CONFIGS } from "@/lib/payments/wallet-config";
+import { WalletQRCode } from "@/components/wallet-qr-code";
 
 /* ── Step indicator ── */
 function Step({ label, active, done }: { label: string; active: boolean; done: boolean }) {
@@ -314,144 +315,66 @@ function CheckoutForm() {
                 ))}
               </div>
 
-              {/* ── Wallet Transfer Details (for JazzCash or Easypaisa) ── */}
+              {/* ── Dynamic QR Payment (JazzCash / Easypaisa) ── */}
               {(paymentMethod === "jazzcash" || paymentMethod === "easypaisa") && (
-                <div
-                  className={`mt-4 rounded-2xl border p-4 sm:p-5 animate-fade-in ${
-                    WALLET_CONFIGS[paymentMethod].bgLight
-                  } ${WALLET_CONFIGS[paymentMethod].borderColor}`}
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                <div className="mt-4 space-y-4 animate-fade-in">
+                  <WalletQRCode
+                    accountNumber={WALLET_CONFIGS[paymentMethod].accountNumber}
+                    accountTitle={WALLET_CONFIGS[paymentMethod].accountTitle}
+                    amount={discountedTotal()}
+                    orderRef={`SB-${Date.now().toString().slice(-6)}`}
+                    walletName={paymentMethod === "jazzcash" ? "JazzCash" : "Easypaisa"}
+                    brandColor={WALLET_CONFIGS[paymentMethod].brandColor}
+                    bgLight={WALLET_CONFIGS[paymentMethod].bgLight}
+                    borderColor={WALLET_CONFIGS[paymentMethod].borderColor}
+                  />
+
+                  {/* Cross-network warning */}
+                  <div className="rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-3 text-xs text-amber-900">
+                    <p className="font-semibold mb-1">⚠️ Important — Pay from the same network</p>
+                    <p className="leading-relaxed">
+                      {paymentMethod === "jazzcash"
+                        ? "Please send from a JazzCash account to our JazzCash number. Cross-network payments are harder to verify."
+                        : "Please send from an Easypaisa account to our Easypaisa number. Cross-network payments are harder to verify."}
+                    </p>
+                  </div>
+
+                  {/* TID + Sender Inputs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{WALLET_CONFIGS[paymentMethod].logo}</span>
-                        <h3 className="font-bold text-slate-900 text-sm sm:text-base">
-                          {WALLET_CONFIGS[paymentMethod].name} Transfer Instructions
-                        </h3>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1">
-                        Please send the exact order total to the account below:
+                      <label htmlFor="walletTid" className={labelCls}>
+                        Transaction ID (TID) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="walletTid"
+                        required
+                        type="text"
+                        placeholder="e.g. TJ240910123456 or 12345678"
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value)}
+                        className={`${inputCls} bg-white`}
+                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        From the SMS/notification you received after payment.
                       </p>
                     </div>
 
-                    <div className="text-left sm:text-right shrink-0 bg-white/60 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none w-full sm:w-auto">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
-                        Payable Amount
-                      </span>
-                      <span className="text-base sm:text-lg font-extrabold text-slate-900">
-                        Rs {discountedTotal().toFixed(0)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Account credentials box */}
-                  <div className="rounded-xl bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-xs mb-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                          Account Title
-                        </span>
-                        <p className="text-sm font-bold text-slate-900">
-                          {WALLET_CONFIGS[paymentMethod].accountTitle}
-                        </p>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
-                          Account / Mobile Number
-                        </span>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          <span className="font-mono text-sm sm:text-base font-extrabold text-slate-900 tracking-wide">
-                            {WALLET_CONFIGS[paymentMethod].accountNumber}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleCopyAccount(
-                                WALLET_CONFIGS[paymentMethod].accountNumber
-                              )
-                            }
-                            className="inline-flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 transition-colors"
-                            title="Copy Account Number"
-                          >
-                            {copied ? (
-                              <>
-                                <Check size={12} className="text-emerald-600" />
-                                <span className="text-emerald-600">Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy size={12} />
-                                <span>Copy</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step-by-step bullet instructions */}
-                  <div className="mb-4 text-xs text-slate-600 space-y-1.5 pl-1">
-                    {WALLET_CONFIGS[paymentMethod].instructions.map((step, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
-                        <span className="font-bold text-slate-800 shrink-0">{idx + 1}.</span>
-                        <span>{step}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* TID and Sender Inputs */}
-                  <div className="pt-3 border-t border-slate-200/60 space-y-4">
-
-                    {/* Cross-network warning banner */}
-                    <div className="rounded-lg bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-900">
-                      <p className="font-semibold mb-1">⚠️ Important — Pay from the same network</p>
-                      <p className="leading-relaxed">
-                        {paymentMethod === "jazzcash"
-                          ? "Please send from a JazzCash account to our JazzCash number above. If you pay from Easypaisa or a bank, the TID will be different and harder to verify."
-                          : "Please send from an Easypaisa account to our Easypaisa number above. If you pay from JazzCash or a bank, the TID will be different and harder to verify."}
+                    <div>
+                      <label htmlFor="walletSender" className={labelCls}>
+                        Your Sending Mobile Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="walletSender"
+                        required
+                        type="text"
+                        placeholder="03XX-XXXXXXX"
+                        value={senderPhone}
+                        onChange={(e) => setSenderPhone(e.target.value)}
+                        className={`${inputCls} bg-white`}
+                      />
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        The mobile number you sent the payment from.
                       </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="walletTid" className={labelCls}>
-                          Transaction ID (TID){" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="walletTid"
-                          required
-                          type="text"
-                          placeholder="e.g. TJ240910123456 or 12345678"
-                          value={transactionId}
-                          onChange={(e) => setTransactionId(e.target.value)}
-                          className={`${inputCls} bg-white`}
-                        />
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          From the SMS/notification you received after transferring.
-                        </p>
-                      </div>
-
-                      <div>
-                        <label htmlFor="walletSender" className={labelCls}>
-                          Your Sending Mobile Number{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          id="walletSender"
-                          required
-                          type="text"
-                          placeholder="03XX-XXXXXXX"
-                          value={senderPhone}
-                          onChange={(e) => setSenderPhone(e.target.value)}
-                          className={`${inputCls} bg-white`}
-                        />
-                        <p className="text-[11px] text-slate-500 mt-1">
-                          The mobile number you sent the payment from.
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>
