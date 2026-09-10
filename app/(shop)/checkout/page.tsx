@@ -135,31 +135,31 @@ function CheckoutForm() {
   return (
     <div className="animate-fade-in">
       {/* Progress Steps */}
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-6 sm:mb-8 overflow-x-auto pb-1 scrollbar-none">
         <Step label="Cart" active={false} done={true} />
-        <ChevronRight size={14} className="text-slate-300" />
+        <ChevronRight size={14} className="text-slate-300 shrink-0" />
         <Step label="Details" active={true} done={false} />
-        <ChevronRight size={14} className="text-slate-300" />
+        <ChevronRight size={14} className="text-slate-300 shrink-0" />
         <Step label="Payment" active={false} done={false} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10">
         {/* ── Left: Form ── */}
         <div className="lg:col-span-3">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 mb-5 sm:mb-6">
             Shipping Details
           </h1>
 
           {error && (
-            <div className="mb-5 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              <span className="text-lg">⚠️</span>
+            <div className="mb-5 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5 sm:p-4 text-xs sm:text-sm text-red-700">
+              <span className="text-base shrink-0">⚠️</span>
               <p>{error}</p>
             </div>
           )}
 
-          <form id="checkout-form" onSubmit={handleSubmit} className="space-y-5">
+          <form id="checkout-form" onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             {/* Name + Email row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
               <div>
                 <label htmlFor="fullName" className={labelCls}>Full Name</label>
                 <input
@@ -317,15 +317,15 @@ function CheckoutForm() {
               {/* ── Wallet Transfer Details (for JazzCash or Easypaisa) ── */}
               {(paymentMethod === "jazzcash" || paymentMethod === "easypaisa") && (
                 <div
-                  className={`mt-4 rounded-2xl border p-5 animate-fade-in ${
+                  className={`mt-4 rounded-2xl border p-4 sm:p-5 animate-fade-in ${
                     WALLET_CONFIGS[paymentMethod].bgLight
                   } ${WALLET_CONFIGS[paymentMethod].borderColor}`}
                 >
-                  <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{WALLET_CONFIGS[paymentMethod].logo}</span>
-                        <h3 className="font-bold text-slate-900 text-base">
+                        <h3 className="font-bold text-slate-900 text-sm sm:text-base">
                           {WALLET_CONFIGS[paymentMethod].name} Transfer Instructions
                         </h3>
                       </div>
@@ -334,18 +334,18 @@ function CheckoutForm() {
                       </p>
                     </div>
 
-                    <div className="text-right shrink-0">
+                    <div className="text-left sm:text-right shrink-0 bg-white/60 sm:bg-transparent p-2.5 sm:p-0 rounded-xl sm:rounded-none w-full sm:w-auto">
                       <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider block">
                         Payable Amount
                       </span>
-                      <span className="text-lg font-extrabold text-slate-900">
+                      <span className="text-base sm:text-lg font-extrabold text-slate-900">
                         Rs {discountedTotal().toFixed(0)}
                       </span>
                     </div>
                   </div>
 
                   {/* Account credentials box */}
-                  <div className="rounded-xl bg-white border border-slate-200/80 p-4 shadow-sm mb-4">
+                  <div className="rounded-xl bg-white border border-slate-200/80 p-3.5 sm:p-4 shadow-xs mb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
@@ -360,8 +360,8 @@ function CheckoutForm() {
                         <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                           Account / Mobile Number
                         </span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="font-mono text-base font-extrabold text-slate-900 tracking-wide">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="font-mono text-sm sm:text-base font-extrabold text-slate-900 tracking-wide">
                             {WALLET_CONFIGS[paymentMethod].accountNumber}
                           </span>
                           <button
@@ -430,7 +430,7 @@ function CheckoutForm() {
                           className={`${inputCls} bg-white`}
                         />
                         <p className="text-[11px] text-slate-500 mt-1">
-                          From the SMS/notification you received after transferring. Only valid for same-network payments.
+                          From the SMS/notification you received after transferring.
                         </p>
                       </div>
 
@@ -449,7 +449,7 @@ function CheckoutForm() {
                           className={`${inputCls} bg-white`}
                         />
                         <p className="text-[11px] text-slate-500 mt-1">
-                          The mobile number you sent the payment from. We use this to verify your transfer.
+                          The mobile number you sent the payment from.
                         </p>
                       </div>
                     </div>
@@ -462,14 +462,14 @@ function CheckoutForm() {
 
         {/* ── Right: Summary ── */}
         <div className="lg:col-span-2">
-          <div className="card p-5 sticky top-24">
-            <h2 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wider">
+          <div className="card p-5 sticky top-24 shadow-xs">
+            <h2 className="font-bold text-slate-900 mb-4 text-xs sm:text-sm uppercase tracking-wider">
               Your Order
             </h2>
 
             <ul className="space-y-3 mb-5 pb-4 border-b border-slate-100">
               {items.map((item) => (
-                <li key={item.variantId} className="flex justify-between text-sm">
+                <li key={item.variantId} className="flex justify-between text-xs sm:text-sm">
                   <span className="text-slate-600 truncate mr-2">
                     {item.productName}
                     <span className="ml-1 text-slate-400">× {item.qty}</span>
@@ -482,7 +482,7 @@ function CheckoutForm() {
             </ul>
 
             {/* Price Breakdown */}
-            <div className="space-y-2 text-sm mb-5">
+            <div className="space-y-2 text-xs sm:text-sm mb-5">
               <div className="flex justify-between text-slate-600">
                 <span>Subtotal</span>
                 <span className="font-medium text-slate-900">Rs {subtotal().toFixed(2)}</span>
@@ -511,7 +511,7 @@ function CheckoutForm() {
                 {appliedCoupon && discountAmount() > 0 && (
                   <p className="text-xs line-through text-slate-400">Rs {subtotal().toFixed(2)}</p>
                 )}
-                <span className="text-2xl font-extrabold text-brand-600">
+                <span className="text-xl sm:text-2xl font-extrabold text-brand-600">
                   Rs {discountedTotal().toFixed(2)}
                 </span>
               </div>
@@ -521,7 +521,7 @@ function CheckoutForm() {
               type="submit"
               form="checkout-form"
               disabled={loading}
-              className="btn-primary w-full py-4 rounded-xl text-sm disabled:opacity-50"
+              className="btn-primary w-full py-3.5 sm:py-4 rounded-xl text-sm disabled:opacity-50 cursor-pointer"
             >
               {loading
                 ? paymentMethod === "cod"
@@ -545,7 +545,7 @@ function CheckoutForm() {
               <span>Secured by SSL encryption</span>
             </div>
 
-            <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-400">
+            <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-slate-400">
               <ShieldCheck size={11} />
               <span>Your data is never shared</span>
             </div>

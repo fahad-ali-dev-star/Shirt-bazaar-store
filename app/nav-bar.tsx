@@ -183,7 +183,7 @@ export function NavBar() {
 
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 bg-white px-5 py-5 flex flex-col gap-4 animate-slide-down absolute top-full left-0 right-0 z-50 shadow-2xl">
+        <div className="md:hidden border-b border-slate-200 bg-white px-5 py-5 flex flex-col gap-4 animate-slide-down absolute top-full left-0 right-0 z-50 shadow-2xl max-h-[calc(100vh-60px)] overflow-y-auto">
           <div className="w-full">
             <AISearchBar />
           </div>

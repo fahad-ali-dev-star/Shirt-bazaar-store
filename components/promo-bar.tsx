@@ -143,13 +143,13 @@ export function PromoBar({ initialPromo }: PromoBarProps) {
         aria-label="Promotional Announcement"
         className={`relative z-40 w-full py-2 px-3 sm:px-6 transition-all duration-300 shadow-xs ${themeStyle.bg}`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 text-xs sm:text-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 sm:gap-3 text-xs sm:text-sm">
           {/* Left / Center: Announcement Content */}
-          <div className="flex flex-1 items-center justify-center flex-wrap gap-2 text-center sm:text-left">
+          <div className="flex flex-1 items-center justify-center flex-wrap gap-1.5 sm:gap-2 text-center sm:text-left">
             {/* Badge */}
             {promo.badge_text && (
               <span
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] sm:text-xs font-bold uppercase tracking-wider border backdrop-blur-sm shadow-xs shrink-0 ${themeStyle.badge}`}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] sm:text-xs font-bold uppercase tracking-wider border backdrop-blur-sm shadow-xs shrink-0 ${themeStyle.badge}`}
               >
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
@@ -160,7 +160,7 @@ export function PromoBar({ initialPromo }: PromoBarProps) {
             )}
 
             {/* Message */}
-            <span className="font-medium tracking-tight text-slate-100">
+            <span className="font-medium tracking-tight text-slate-100 text-[11px] sm:text-sm">
               {promo.message}
             </span>
 
@@ -169,17 +169,17 @@ export function PromoBar({ initialPromo }: PromoBarProps) {
               <button
                 type="button"
                 onClick={() => handleClaimOrCopy(promo.coupon_code!)}
-                className={`group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-0.5 text-[11px] font-mono font-bold tracking-wider border transition-all active:scale-95 shadow-xs cursor-pointer ${themeStyle.code}`}
+                className={`group inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[10px] sm:text-[11px] font-mono font-bold tracking-wider border transition-all active:scale-95 shadow-xs cursor-pointer ${themeStyle.code}`}
                 title="Click to copy & auto-apply coupon code"
               >
-                <Tag size={11} className="opacity-70 group-hover:scale-110 transition-transform" />
+                <Tag size={10} className="opacity-70 group-hover:scale-110 transition-transform" />
                 <span>{promo.coupon_code}</span>
                 {copied ? (
-                  <span className="inline-flex items-center gap-0.5 text-emerald-400 font-sans font-semibold text-[10px]">
-                    <Check size={11} /> Applied!
+                  <span className="inline-flex items-center gap-0.5 text-emerald-400 font-sans font-semibold text-[9px] sm:text-[10px]">
+                    <Check size={10} /> Applied!
                   </span>
                 ) : (
-                  <Copy size={10} className="opacity-60 group-hover:opacity-100" />
+                  <Copy size={9} className="opacity-60 group-hover:opacity-100" />
                 )}
               </button>
             )}
@@ -193,10 +193,10 @@ export function PromoBar({ initialPromo }: PromoBarProps) {
                     handleClaimOrCopy(promo.coupon_code);
                   }
                 }}
-                className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-[11px] sm:text-xs font-semibold tracking-wide transition-all shadow-xs hover:gap-1.5 active:scale-95 shrink-0 ${themeStyle.cta}`}
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] sm:text-xs font-semibold tracking-wide transition-all shadow-xs hover:gap-1.5 active:scale-95 shrink-0 ${themeStyle.cta}`}
               >
                 <span>{promo.cta_text}</span>
-                <ArrowRight size={11} />
+                <ArrowRight size={10} />
               </Link>
             )}
           </div>
@@ -209,7 +209,7 @@ export function PromoBar({ initialPromo }: PromoBarProps) {
               className="p-1 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
               aria-label="Dismiss announcement"
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           )}
         </div>

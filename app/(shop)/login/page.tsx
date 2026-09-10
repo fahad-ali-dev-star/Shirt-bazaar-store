@@ -157,18 +157,18 @@ function LoginForm() {
       </div>
 
       {/* ── Right: Form ── */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-[#f8f8fb]">
+      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 bg-[#f8f8fb]">
         <div className="w-full max-w-md">
           {/* Logo (mobile only) */}
-          <p className="lg:hidden text-2xl font-extrabold gradient-text mb-8 text-center">Shirt Bazaar.</p>
+          <p className="lg:hidden text-2xl font-extrabold gradient-text mb-6 sm:mb-8 text-center">Shirt Bazaar.</p>
 
-          <div className="card p-8 shadow-card">
+          <div className="card p-5 sm:p-8 shadow-card">
             {/* Title */}
-            <div className="mb-7">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <div className="mb-5 sm:mb-7">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                 {isSignUp ? "Create an account" : "Welcome back"}
               </h1>
-              <p className="mt-1.5 text-sm text-slate-500">
+              <p className="mt-1 text-xs sm:text-sm text-slate-500">
                 {isSignUp
                   ? "Join us to manage your orders."
                   : "Sign in to continue to your account."}

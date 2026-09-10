@@ -74,48 +74,48 @@ export function HeroBanner({ banner }: HeroBannerProps) {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full mx-auto max-w-7xl px-6 sm:px-10 lg:px-16 flex flex-col justify-center h-full">
-        <div className="max-w-2xl pt-16 sm:pt-20 animate-slide-up">
+      <div className="relative z-10 w-full mx-auto max-w-7xl px-4 sm:px-10 lg:px-16 flex flex-col justify-center h-full">
+        <div className="max-w-2xl pt-12 sm:pt-20 animate-slide-up">
           {/* Badge */}
           {badgeText && (
-            <div className="inline-flex items-center gap-2.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-6 w-fit">
-              <span className="relative inline-flex h-2 w-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-3.5 py-1 sm:px-4 sm:py-1.5 mb-4 sm:mb-6 w-fit">
+              <span className="relative inline-flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
               </span>
-              <span className="text-[10px] font-bold tracking-[0.22em] uppercase text-white/85">
+              <span className="text-[9px] sm:text-[10px] font-bold tracking-[0.2em] uppercase text-white/85">
                 {badgeText}
               </span>
             </div>
           )}
 
           {/* Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.025em] leading-[1.05] text-white mb-4 drop-shadow-lg">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.025em] leading-[1.1] sm:leading-[1.05] text-white mb-3 sm:mb-4 drop-shadow-lg">
             {title}
           </h1>
 
           {/* Accent rule */}
-          <div className="w-16 h-[3px] bg-gradient-to-r from-brand-400 to-white/30 rounded-full mb-5" />
+          <div className="w-12 sm:w-16 h-[3px] bg-gradient-to-r from-brand-400 to-white/30 rounded-full mb-4 sm:mb-5" />
 
           {/* Subtitle */}
-          <p className="text-sm sm:text-base text-slate-300/90 mb-8 max-w-md leading-relaxed font-light drop-shadow">
+          <p className="text-xs sm:text-base text-slate-300/90 mb-6 sm:mb-8 max-w-md leading-relaxed font-light drop-shadow">
             {subtitle}
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
             <a
               href={ctaLink}
-              className="inline-flex items-center gap-2.5 bg-white text-slate-950 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 active:scale-95 transition-all shadow-xl hover:shadow-white/20 text-sm tracking-wide"
+              className="inline-flex items-center justify-center gap-2.5 bg-white text-slate-950 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold hover:bg-slate-50 active:scale-95 transition-all shadow-xl hover:shadow-white/20 text-xs sm:text-sm tracking-wide"
             >
               <span>{ctaText}</span>
-              <ArrowRight size={16} />
+              <ArrowRight size={15} />
             </a>
 
             {secondaryCtaText && secondaryCtaLink && (
               <Link
                 href={secondaryCtaLink}
-                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/25 px-6 py-3 rounded-xl font-medium transition-all text-sm active:scale-95"
+                className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border border-white/25 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-medium transition-all text-xs sm:text-sm active:scale-95"
               >
                 <span>{secondaryCtaText}</span>
               </Link>
@@ -125,7 +125,7 @@ export function HeroBanner({ banner }: HeroBannerProps) {
       </div>
 
       {/* Scroll indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/40 animate-bounce-in">
+      <div className="hidden md:flex absolute bottom-6 left-1/2 -translate-x-1/2 flex-col items-center gap-1 text-white/40 animate-bounce-in pointer-events-none">
         <span className="text-[10px] uppercase tracking-widest font-medium">Scroll</span>
         <ChevronDown size={16} />
       </div>

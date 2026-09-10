@@ -78,42 +78,76 @@ export default function AdminOrdersPage() {
     );
   }
 
-  if (loading) return <main className="mx-auto max-w-5xl px-4 py-10">Loading…</main>;
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="text-center space-y-3">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-brand-600 border-r-transparent" />
+        <p className="text-sm font-medium text-slate-500">Loading customer orders…</p>
+      </div>
+    </div>
+  );
+
   if (error)
     return (
-      <main className="mx-auto max-w-5xl px-4 py-10">
-        <p className="text-red-600">{error}</p>
+      <main className="mx-auto max-w-5xl px-3.5 sm:px-4 py-6 sm:py-10">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
+          <p className="font-semibold text-base">{error}</p>
+        </div>
       </main>
     );
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-semibold">Orders</h1>
+    <div className="mx-auto max-w-5xl pb-16 space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Orders Manager</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Track fulfillment, update tracking numbers, and verify payment transactions.
+          </p>
+        </div>
+        <span className="text-xs font-semibold px-3 py-1 bg-slate-100 text-slate-700 rounded-full self-start sm:self-auto">
+          {orders.length} Total Order{orders.length === 1 ? "" : "s"}
+        </span>
+      </div>
 
-      {orders.length === 0 && <p className="text-gray-600">No orders yet.</p>}
+      {orders.length === 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500">
+          <p className="text-base font-semibold text-slate-700">No orders yet</p>
+          <p className="text-xs text-slate-400 mt-1">New customer orders will appear here in real-time.</p>
+        </div>
+      )}
 
       <div className="space-y-4">
         {orders.map((order) => (
-          <div key={order.id} className="rounded-lg border p-4 bg-white shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+          <div key={order.id} className="rounded-2xl border border-slate-200 p-4 sm:p-5 bg-white shadow-xs space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
-                <p className="font-medium font-mono">#{order.id.slice(0, 8).toUpperCase()}</p>
-                <p className="text-sm text-gray-500">
-                  {new Date(order.created_at).toLocaleString()}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold font-mono text-slate-900 text-base">#{order.id.slice(0, 8).toUpperCase()}</p>
+                  <span className="text-xs text-slate-400">•</span>
+                  <p className="text-xs text-slate-500">
+                    {new Date(order.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 {/* Payment Method Badge */}
                 <span
-                  className={`rounded px-2.5 py-0.5 text-xs font-semibold uppercase border ${
+                  className={`rounded-lg px-2.5 py-1 text-xs font-semibold uppercase border ${
                     order.payment_method === "cod"
-                      ? "bg-amber-100 text-amber-800 border-amber-200"
+                      ? "bg-amber-50 text-amber-800 border-amber-200"
                       : order.payment_method === "jazzcash"
-                      ? "bg-red-100 text-red-800 border-red-200"
+                      ? "bg-red-50 text-red-800 border-red-200"
                       : order.payment_method === "easypaisa"
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                      : "bg-blue-100 text-blue-800 border-blue-200"
+                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                      : "bg-blue-50 text-blue-800 border-blue-200"
                   }`}
                 >
                   {order.payment_method === "cod"
@@ -126,7 +160,7 @@ export default function AdminOrdersPage() {
                 </span>
 
                 {/* Payment Status with quick toggle */}
-                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded px-2 py-1 text-xs">
+                <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs">
                   <span className="text-slate-500">Payment:</span>
                   <span
                     className={`font-bold capitalize ${
@@ -142,10 +176,10 @@ export default function AdminOrdersPage() {
                         order.payment_status === "paid" ? "unpaid" : "paid"
                       )
                     }
-                    className="ml-1 text-[10px] text-blue-600 hover:text-blue-800 underline font-medium"
+                    className="ml-1 text-[11px] text-brand-600 hover:text-brand-800 underline font-semibold"
                     title="Click to toggle payment verification status"
                   >
-                    {order.payment_status === "paid" ? "Mark Unpaid" : "Mark as Paid"}
+                    {order.payment_status === "paid" ? "Mark Unpaid" : "Mark Paid"}
                   </button>
                 </div>
 
@@ -153,11 +187,11 @@ export default function AdminOrdersPage() {
                 <select
                   value={order.status}
                   onChange={(e) => updateStatus(order.id, e.target.value as AdminOrder["status"])}
-                  className="rounded border px-2 py-1 text-sm bg-white"
+                  className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold bg-white text-slate-800 shadow-2xs focus:border-black focus:outline-none capitalize"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>
-                      {s}
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -166,15 +200,15 @@ export default function AdminOrdersPage() {
 
             {/* Payment Reference / TID Details */}
             {order.payment_reference && (
-              <div className="mt-2.5 rounded bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs text-slate-800 flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <span className="font-semibold text-slate-600">Payment Ref / TID:</span>{" "}
-                  <span className="font-mono font-bold text-slate-900">{order.payment_reference}</span>
+              <div className="rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2 text-xs text-slate-800 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-slate-600">Payment Ref / TID:</span>
+                  <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">{order.payment_reference}</span>
                 </div>
                 {order.payment_status !== "paid" && (order.payment_method === "jazzcash" || order.payment_method === "easypaisa") && (
                   <button
                     onClick={() => updatePaymentStatus(order.id, "paid")}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-0.5 rounded text-[11px] font-semibold transition-colors"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-colors shadow-xs"
                   >
                     ✓ Confirm TID & Mark Paid
                   </button>
@@ -182,34 +216,49 @@ export default function AdminOrdersPage() {
               </div>
             )}
 
-            <div className="mt-3 divide-y border-t text-sm">
+            {/* Order Items */}
+            <div className="divide-y divide-slate-100 text-xs sm:text-sm">
               {order.order_items?.map((item: OrderItemWithProduct, i: number) => (
-                <div key={i} className="flex justify-between py-2">
-                  <span>
-                    {item.product_variants?.products?.name} — {item.product_variants?.size}/
-                    {item.product_variants?.color} × {item.qty}
+                <div key={i} className="flex justify-between items-center py-2 gap-3">
+                  <span className="text-slate-800 font-medium">
+                    {item.product_variants?.products?.name}{" "}
+                    <span className="text-slate-400 font-normal">
+                      ({item.product_variants?.size}/{item.product_variants?.color})
+                    </span>{" "}
+                    <span className="font-bold text-slate-900">× {item.qty}</span>
                   </span>
-                  <span>Rs {item.price_at_purchase * item.qty}</span>
+                  <span className="font-semibold text-slate-900 shrink-0">
+                    Rs {(item.price_at_purchase * item.qty).toLocaleString()}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-2 flex justify-between border-t pt-2 text-sm font-medium">
-              <span>
-                Ship to: {order.shipping_address?.fullName}, {order.shipping_address?.city} ({order.shipping_address?.phone})
-              </span>
-              <span>Total: Rs {order.total}</span>
+            {/* Customer & Address Footer */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-3 text-xs sm:text-sm gap-2">
+              <div className="text-slate-600">
+                <span className="font-semibold text-slate-800">Ship to: </span>
+                {order.shipping_address?.fullName}, {order.shipping_address?.address}, {order.shipping_address?.city}{" "}
+                {order.shipping_address?.phone && (
+                  <span className="text-slate-500 font-mono">({order.shipping_address.phone})</span>
+                )}
+              </div>
+              <div className="font-extrabold text-slate-950 text-base self-end sm:self-auto">
+                Total: Rs {Number(order.total).toLocaleString()}
+              </div>
             </div>
             
+            {/* Courier Tracking Box */}
             {order.courier && order.tracking_number && (
-              <div className="mt-2 rounded bg-blue-50 p-2 text-xs text-blue-800 border border-blue-100">
-                <p><strong>Courier:</strong> {order.courier}</p>
-                <p><strong>Tracking:</strong> {order.tracking_number}</p>
+              <div className="rounded-xl bg-blue-50/80 p-2.5 text-xs text-blue-900 border border-blue-200/60 flex items-center justify-between flex-wrap gap-2">
+                <p>
+                  <strong>Courier:</strong> {order.courier} | <strong>Tracking:</strong> <span className="font-mono font-bold">{order.tracking_number}</span>
+                </p>
               </div>
             )}
           </div>
         ))}
       </div>
-    </main>
+    </div>
   );
 }

@@ -257,13 +257,13 @@ export default function AdminAnalyticsPage() {
             </div>
 
             {/* Visual Bar Chart */}
-            <div className="mt-6 pt-4 h-52 flex items-end justify-between gap-2 sm:gap-3 border-b border-slate-100 pb-2">
+            <div className="mt-6 pt-4 h-52 flex items-end justify-between gap-1 sm:gap-3 border-b border-slate-100 pb-2 overflow-x-auto">
               {dailySales.map((day) => {
                 const heightPercent = Math.max(8, Math.round((day.revenue / maxDailyRevenue) * 100));
                 return (
                   <div
                     key={day.date}
-                    className="flex-1 flex flex-col items-center gap-2 group relative h-full justify-end"
+                    className="flex-1 min-w-[20px] sm:min-w-0 flex flex-col items-center gap-2 group relative h-full justify-end"
                   >
                     {/* Tooltip on hover */}
                     <div className="absolute -top-12 z-20 hidden group-hover:flex flex-col items-center bg-slate-900 text-white text-[11px] font-medium py-1.5 px-2.5 rounded-lg shadow-lg whitespace-nowrap pointer-events-none">
@@ -276,12 +276,12 @@ export default function AdminAnalyticsPage() {
                       style={{ height: `${heightPercent}%` }}
                       className={`w-full rounded-t-lg transition-all duration-500 ${
                         day.revenue > 0
-                          ? "bg-gradient-to-t from-brand-600 to-indigo-500 group-hover:from-brand-700 group-hover:to-indigo-600 shadow-sm"
+                          ? "bg-gradient-to-t from-brand-600 to-indigo-500 group-hover:from-brand-700 group-hover:to-indigo-600 shadow-xs"
                           : "bg-slate-100 group-hover:bg-slate-200"
                       }`}
                     />
                     {/* Label */}
-                    <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-700">
+                    <span className="text-[9px] sm:text-[10px] font-medium text-slate-400 group-hover:text-slate-700 truncate max-w-full">
                       {day.label.split(" ")[1]}
                     </span>
                   </div>
@@ -297,7 +297,7 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Payment Channels & Pipeline */}
-        <div className="card p-6 flex flex-col justify-between">
+        <div className="card p-5 sm:p-6 flex flex-col justify-between">
           <div>
             <h2 className="text-base font-bold text-slate-900 mb-1">Payment & Pipeline</h2>
             <p className="text-xs text-slate-500 mb-6">Payment channels & fulfillment status</p>
@@ -305,7 +305,7 @@ export default function AdminAnalyticsPage() {
             {/* Payment Method Split */}
             <div className="space-y-4">
               <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5 flex-wrap gap-1">
                   <span className="flex items-center gap-1.5">
                     <Banknote size={14} className="text-amber-600" /> Cash on Delivery (COD)
                   </span>
@@ -320,9 +320,9 @@ export default function AdminAnalyticsPage() {
               </div>
 
               <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5">
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5 flex-wrap gap-1">
                   <span className="flex items-center gap-1.5">
-                    <CreditCard size={14} className="text-blue-600" /> Stripe (Card)
+                    <CreditCard size={14} className="text-blue-600" /> Stripe / Cards
                   </span>
                   <span>Rs {paymentBreakdown.stripe.revenue.toLocaleString()} ({paymentBreakdown.stripe.count})</span>
                 </div>
@@ -366,8 +366,8 @@ export default function AdminAnalyticsPage() {
       {/* ── Bottom Row: Top Products & Low Stock Alerts ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Best Selling Products */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-5">
+        <div className="card p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
             <div>
               <h2 className="text-base font-bold text-slate-900">Top Best-Sellers</h2>
               <p className="text-xs text-slate-500">Highest grossing shirts in your store</p>
@@ -410,8 +410,8 @@ export default function AdminAnalyticsPage() {
         </div>
 
         {/* Low Stock Alerts */}
-        <div className="card p-6">
-          <div className="flex items-center justify-between mb-5">
+        <div className="card p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
             <div>
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <AlertTriangle size={16} className="text-amber-500" />
@@ -455,8 +455,8 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* ── Recent Transactions Feed ── */}
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-5">
+      <div className="card p-5 sm:p-6">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
           <div>
             <h2 className="text-base font-bold text-slate-900">Recent Transactions</h2>
             <p className="text-xs text-slate-500">Latest customer orders</p>
@@ -475,7 +475,7 @@ export default function AdminAnalyticsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left text-xs min-w-[560px]">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-400 uppercase tracking-wider font-semibold">
                   <th className="pb-3">Order ID</th>

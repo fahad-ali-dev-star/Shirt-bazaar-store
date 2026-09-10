@@ -227,17 +227,17 @@ export default function AdminOffersPage() {
     THEME_OPTIONS.find((t) => t.id === form.theme) || THEME_OPTIONS[0];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-3.5 sm:px-6 py-4 sm:py-8">
       {/* Top Header */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl flex items-center gap-2.5">
-              <Megaphone className="h-7 w-7 text-brand-600" />
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl flex items-center gap-2">
+              <Megaphone className="h-6 w-6 sm:h-7 sm:w-7 text-brand-600 shrink-0" />
               <span>Offers & Announcement Bar</span>
             </h1>
             <span
-              className={`rounded-full px-3 py-1 text-xs font-bold border transition-colors ${
+              className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold border transition-colors ${
                 form.is_active
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                   : "bg-slate-100 text-slate-500 border-slate-200"
@@ -246,7 +246,7 @@ export default function AdminOffersPage() {
               {form.is_active ? "● Live on Storefront" : "○ Inactive / Hidden"}
             </span>
           </div>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <p className="mt-1.5 text-xs sm:text-sm text-slate-500">
             Control the top announcement ribbon seen across your entire store. Announce flash sales, discount codes, and free shipping.
           </p>
         </div>

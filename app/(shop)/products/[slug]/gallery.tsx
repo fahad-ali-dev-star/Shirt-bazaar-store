@@ -43,9 +43,9 @@ export function ProductImageGallery({
   const next = () => switchTo((activeIdx + 1) % images.length);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3 sm:gap-4">
       {/* Main Image */}
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl bg-slate-50 border border-slate-100 shadow-card group">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl sm:rounded-3xl bg-slate-50 border border-slate-100 shadow-card group">
         <Image
           src={images[activeIdx].url}
           alt={productName}
@@ -61,14 +61,14 @@ export function ProductImageGallery({
             <button
               onClick={prev}
               aria-label="Previous image"
-              className="absolute left-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-full bg-white/90 shadow-md text-slate-700 hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+              className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-xs shadow-md text-slate-700 hover:bg-white transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100 active:scale-90"
             >
               <ChevronLeft size={18} />
             </button>
             <button
               onClick={next}
               aria-label="Next image"
-              className="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 flex items-center justify-center rounded-full bg-white/90 shadow-md text-slate-700 hover:bg-white transition-all opacity-0 group-hover:opacity-100"
+              className="absolute right-2.5 sm:right-3 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-xs shadow-md text-slate-700 hover:bg-white transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100 active:scale-90"
             >
               <ChevronRight size={18} />
             </button>
@@ -77,13 +77,13 @@ export function ProductImageGallery({
 
         {/* Dot indicators */}
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 bg-black/20 backdrop-blur-xs px-2.5 py-1 rounded-full">
             {images.map((_, i) => (
               <button
                 key={i}
                 onClick={() => switchTo(i)}
                 aria-label={`Go to image ${i + 1}`}
-                className={`rounded-full transition-all ${i === activeIdx ? "w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/50 hover:bg-white/80"}`}
+                className={`rounded-full transition-all ${i === activeIdx ? "w-4 sm:w-5 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/50 hover:bg-white/80"}`}
               />
             ))}
           </div>
@@ -92,23 +92,23 @@ export function ProductImageGallery({
 
       {/* Thumbnails */}
       {images.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 scrollbar-hide">
           {images.map((img, i) => (
             <button
               key={img.url}
               type="button"
               onClick={() => switchTo(i)}
-              className={`relative aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all focus:outline-none ${
+              className={`relative aspect-[4/5] w-16 sm:w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all focus:outline-none ${
                 activeIdx === i
                   ? "border-brand-600 ring-2 ring-brand-200 ring-offset-1"
-                  : "border-transparent opacity-55 hover:opacity-100 hover:border-slate-300"
+                  : "border-transparent opacity-60 hover:opacity-100 hover:border-slate-300"
               }`}
             >
               <Image
                 src={img.url}
                 alt={`${productName} ${i + 1}`}
                 fill
-                sizes="80px"
+                sizes="(max-width: 640px) 64px, 80px"
                 loading="lazy"
                 className="object-cover"
               />

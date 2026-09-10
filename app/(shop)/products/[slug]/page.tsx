@@ -94,8 +94,8 @@ export default async function ProductPage({ params }: Props) {
   return (
     <main className="animate-fade-in">
       {/* Breadcrumb */}
-      <div className="mx-auto max-w-6xl px-4 py-4">
-        <nav className="flex items-center gap-1.5 text-xs text-slate-400">
+      <div className="mx-auto max-w-6xl px-4 py-3 sm:py-4 overflow-x-auto scrollbar-none">
+        <nav className="flex items-center gap-1.5 text-xs text-slate-400 whitespace-nowrap">
           <Link href="/" className="hover:text-brand-600 transition-colors">Home</Link>
           <ChevronRight size={12} />
           {product.category ? (
@@ -114,13 +114,13 @@ export default async function ProductPage({ params }: Props) {
               <ChevronRight size={12} />
             </>
           )}
-          <span className="text-slate-600 font-medium truncate max-w-xs">{product.name}</span>
+          <span className="text-slate-700 font-semibold truncate max-w-xs">{product.name}</span>
         </nav>
       </div>
 
       {/* Main grid */}
-      <div className="mx-auto max-w-6xl px-4 pb-16">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:gap-16">
+      <div className="mx-auto max-w-6xl px-4 pb-12 sm:pb-16">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-14 items-start">
 
           {/* ── Left: Gallery ── */}
           <div className="animate-slide-up">
@@ -130,23 +130,23 @@ export default async function ProductPage({ params }: Props) {
           {/* ── Right: Info + Buy-box ── */}
           <div className="flex flex-col animate-slide-up" style={{ animationDelay: "80ms" }}>
             {/* Title + stock badge */}
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
                 {product.name}
               </h1>
               {totalStock > 0 ? (
-                <span className="shrink-0 mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="shrink-0 mt-1 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   In Stock
                 </span>
               ) : (
-                <span className="shrink-0 mt-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 border border-red-200">
+                <span className="shrink-0 mt-1 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-red-50 text-red-600 border border-red-200">
                   Out of Stock
                 </span>
               )}
             </div>
 
             {/* Rating placeholder */}
-            <div className="flex items-center gap-1.5 mt-3">
+            <div className="flex items-center gap-1.5 mt-2.5 sm:mt-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Star key={i} size={14} className={i <= 4 ? "text-amber-400 fill-amber-400" : "text-slate-200 fill-slate-200"} />
               ))}
@@ -154,23 +154,23 @@ export default async function ProductPage({ params }: Props) {
             </div>
 
             {/* Price */}
-            <div className="mt-5 flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-slate-950">Rs {product.base_price}</span>
-              <span className="text-sm text-slate-400 font-medium">/ piece</span>
+            <div className="mt-4 sm:mt-5 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">Rs {Number(product.base_price).toLocaleString()}</span>
+              <span className="text-xs sm:text-sm text-slate-400 font-medium">/ piece</span>
             </div>
 
             {/* Divider */}
-            <div className="my-6 h-px bg-slate-100" />
+            <div className="my-5 sm:my-6 h-px bg-slate-100" />
 
             {/* Description */}
             {product.description && (
-              <p className="text-slate-600 leading-relaxed text-[15px] mb-6">
+              <p className="text-slate-600 leading-relaxed text-sm sm:text-[15px] mb-5 sm:mb-6">
                 {product.description}
               </p>
             )}
 
             {/* Add to cart */}
-            <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+            <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-2xs">
               <AddToCartForm
                 productName={product.name}
                 basePrice={product.base_price}
@@ -180,18 +180,18 @@ export default async function ProductPage({ params }: Props) {
             </div>
 
             {/* Trust badges */}
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-5 sm:mt-6 grid grid-cols-2 gap-2.5 sm:gap-3">
               {[
                 { icon: <Star size={16} className="text-amber-500" />, title: "Premium Quality", desc: "100% combed cotton" },
-                { icon: <ShieldCheck size={16} className="text-brand-500" />, title: "Secure Checkout", desc: "SSL encrypted" },
+                { icon: <ShieldCheck size={16} className="text-brand-500" />, title: "Secure Checkout", desc: "COD & JazzCash" },
                 { icon: <Truck size={16} className="text-brand-500" />, title: "Fast Shipping", desc: "3–5 business days" },
                 { icon: <RotateCcw size={16} className="text-brand-500" />, title: "Easy Returns", desc: "Hassle-free policy" },
               ].map((b) => (
-                <div key={b.title} className="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-slate-100">
+                <div key={b.title} className="flex items-start gap-2 sm:gap-2.5 p-2.5 sm:p-3 rounded-xl bg-white border border-slate-100 shadow-2xs">
                   <div className="mt-0.5 shrink-0">{b.icon}</div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-800">{b.title}</p>
-                    <p className="text-[11px] text-slate-500">{b.desc}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-800 truncate">{b.title}</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 leading-snug">{b.desc}</p>
                   </div>
                 </div>
               ))}
@@ -203,15 +203,15 @@ export default async function ProductPage({ params }: Props) {
 
       {/* ── Related Products ("You May Also Like") ── */}
       {relatedProducts && relatedProducts.length > 0 && (
-        <section className="border-t border-slate-200 bg-white py-16">
+        <section className="border-t border-slate-200 bg-white py-12 sm:py-16">
           <div className="mx-auto max-w-6xl px-4">
-            <div className="mb-8 flex items-center justify-between">
+            <div className="mb-6 sm:mb-8 flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-brand-500 mb-1 flex items-center gap-1.5">
                   <Sparkles size={12} />
                   Curated For You
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                <h2 className="text-xl sm:text-3xl font-bold tracking-tight text-slate-900">
                   You May Also Like
                 </h2>
               </div>
@@ -223,8 +223,8 @@ export default async function ProductPage({ params }: Props) {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {relatedProducts.map((p, idx) => {
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
+              {relatedProducts.map((p) => {
                 const relImages = (Array.isArray(p.product_images) ? p.product_images : []) as {
                   url: string;
                   position: number;
@@ -238,7 +238,7 @@ export default async function ProductPage({ params }: Props) {
                   <Link
                     key={p.id}
                     href={`/products/${p.slug}`}
-                    className="group flex flex-col card-hover rounded-2xl overflow-hidden bg-slate-50 border border-slate-100"
+                    className="group flex flex-col card-hover rounded-xl sm:rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 shadow-xs"
                   >
                     <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
                       {relCover ? (
@@ -247,7 +247,7 @@ export default async function ProductPage({ params }: Props) {
                           alt={p.name}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          sizes="(max-width: 640px) 50vw, 25vw"
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-4xl text-slate-200">
@@ -255,8 +255,8 @@ export default async function ProductPage({ params }: Props) {
                         </div>
                       )}
                     </div>
-                    <div className="p-3 sm:p-4 bg-white border-t border-slate-100 flex justify-between items-start gap-2">
-                      <div className="min-w-0">
+                    <div className="p-2.5 sm:p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-2">
+                      <div className="min-w-0 w-full sm:w-auto">
                         <h3 className="font-semibold text-xs sm:text-sm text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
                           {p.name}
                         </h3>
@@ -264,8 +264,8 @@ export default async function ProductPage({ params }: Props) {
                           {p.category || "Premium Cotton"}
                         </p>
                       </div>
-                      <p className="font-bold text-xs sm:text-sm text-slate-900 shrink-0">
-                        Rs {p.base_price}
+                      <p className="font-bold text-xs sm:text-sm text-slate-900 shrink-0 self-end sm:self-auto">
+                        Rs {Number(p.base_price).toLocaleString()}
                       </p>
                     </div>
                   </Link>

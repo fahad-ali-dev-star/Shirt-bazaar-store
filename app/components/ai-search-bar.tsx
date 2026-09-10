@@ -55,9 +55,9 @@ export function AISearchBar() {
     <div className="relative w-full max-w-lg">
       <div
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-sm text-slate-500 hover:border-indigo-300 hover:bg-white transition-all cursor-pointer shadow-sm"
+        className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm text-slate-500 hover:border-indigo-300 hover:bg-white transition-all cursor-pointer shadow-xs"
       >
-        <Sparkles className="h-4 w-4 text-indigo-600 animate-pulse" />
+        <Sparkles className="h-4 w-4 text-indigo-600 animate-pulse shrink-0" />
         <span className="flex-1 truncate">Search shirts by vibe, style, or occasion...</span>
         <kbd className="hidden sm:inline-block rounded bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
           AI Search
@@ -66,18 +66,18 @@ export function AISearchBar() {
 
       {/* Modal / Expanded Dialog */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl transition-all border border-slate-100">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 sm:pt-24 px-3 sm:px-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-2xl transition-all border border-slate-100 max-h-[85vh] flex flex-col">
             {/* Input Header */}
-            <form onSubmit={handleSearch} className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
-              <Sparkles className="h-5 w-5 text-indigo-600" />
+            <form onSubmit={handleSearch} className="flex items-center gap-2.5 sm:gap-3 border-b border-slate-100 px-4 sm:px-5 py-3.5 sm:py-4 shrink-0">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 shrink-0" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Try 'oversized vintage graphic tee' or 'crisp white formal shirt'..."
+                placeholder="Try 'vintage graphic tee' or 'white oxford'..."
                 autoFocus
-                className="flex-1 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="flex-1 text-sm sm:text-base text-slate-900 placeholder:text-slate-400 focus:outline-none min-w-0"
               />
               {loading ? (
                 <svg className="h-5 w-5 animate-spin text-indigo-600" viewBox="0 0 24 24" fill="none">
@@ -108,10 +108,10 @@ export function AISearchBar() {
             </form>
 
             {/* Content area */}
-            <div className="max-h-[60vh] overflow-y-auto p-5">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
               {!results && !loading && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
                     Suggested AI Searches
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -134,10 +134,10 @@ export function AISearchBar() {
                             .then((res) => res.json())
                             .then((d) => setResults(d.results || []));
                         }}
-                        className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-700 transition-all"
+                        className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-700 transition-all active:scale-95"
                       >
-                        <Tag className="h-3 w-3 text-indigo-500" />
-                        {suggestion}
+                        <Tag className="h-3 w-3 text-indigo-500 shrink-0" />
+                        <span>{suggestion}</span>
                       </button>
                     ))}
                   </div>
@@ -146,42 +146,42 @@ export function AISearchBar() {
 
               {loading && (
                 <div className="py-12 text-center">
-                  <Sparkles className="mx-auto h-8 w-8 text-indigo-600 animate-spin mb-3" />
-                  <p className="text-sm font-medium text-slate-700">Gemini is searching catalog for best matches...</p>
+                  <Sparkles className="mx-auto h-7 w-7 text-indigo-600 animate-spin mb-3" />
+                  <p className="text-xs sm:text-sm font-medium text-slate-700">Gemini is searching catalog for best matches...</p>
                 </div>
               )}
 
               {results && results.length === 0 && !loading && (
                 <div className="py-10 text-center">
-                  <p className="text-sm text-slate-500">No matching shirts found for &quot;{query}&quot;.</p>
+                  <p className="text-xs sm:text-sm text-slate-500">No matching shirts found for &quot;{query}&quot;.</p>
                 </div>
               )}
 
               {results && results.length > 0 && !loading && (
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                    <span>AI Matched Results ({results.length})</span>
-                    <span className="text-indigo-600 font-medium">Powered by Supabase pgvector</span>
+                    <span>AI Matched ({results.length})</span>
+                    <span className="text-indigo-600 font-medium">Supabase pgvector</span>
                   </div>
                   {results.map((product) => (
                     <Link
                       key={product.id}
                       href={`/products/${product.slug}`}
                       onClick={handleClose}
-                      className="group flex items-center gap-4 rounded-2xl border border-slate-100 p-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"
+                      className="group flex items-center gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border border-slate-100 p-2.5 sm:p-3 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"
                     >
-                      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100 border border-slate-200">
+                      <div className="relative h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0 overflow-hidden rounded-lg sm:rounded-xl bg-slate-100 border border-slate-200">
                         {product.image_url ? (
                           <Image
                             src={product.image_url}
                             alt={product.name}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform"
-                            sizes="64px"
+                            sizes="(max-width: 640px) 56px, 64px"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                            No image
+                            👕
                           </div>
                         )}
                       </div>

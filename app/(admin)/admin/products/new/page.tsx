@@ -421,7 +421,7 @@ export default function NewProductPage() {
 
             {/* Variants Matrix Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+              <table className="w-full text-left text-xs border-collapse min-w-[550px]">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-500 uppercase tracking-wider">
                     <th className="py-2 px-2">Size</th>

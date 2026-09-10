@@ -193,49 +193,49 @@ export default function AdminProductsPage() {
       </div>
 
       {/* KPI Metrics Summary Bar (Shopify Analytics Bar) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-slate-500 text-xs font-medium uppercase tracking-wider">
-            <Package className="h-4 w-4 text-slate-400" />
-            <span>Total Products</span>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-slate-500 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
+            <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" />
+            <span className="truncate">Total Products</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-1.5">{metrics.totalProducts}</p>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{metrics.totalProducts}</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-green-700 text-xs font-medium uppercase tracking-wider">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <span>Active Listings</span>
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-green-700 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
+            <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
+            <span className="truncate">Active Listings</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-1.5">{metrics.activeCount}</p>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{metrics.activeCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-amber-700 text-xs font-medium uppercase tracking-wider">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <span>Low / Out of Stock</span>
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-amber-700 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600" />
+            <span className="truncate">Low / Out of Stock</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-1.5">{metrics.lowStockCount}</p>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{metrics.lowStockCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-          <div className="flex items-center gap-2 text-blue-700 text-xs font-medium uppercase tracking-wider">
-            <Boxes className="h-4 w-4 text-blue-600" />
-            <span>Total Stock Units</span>
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-blue-700 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
+            <Boxes className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600" />
+            <span className="truncate">Total Stock Units</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-1.5">{metrics.totalStock.toLocaleString()}</p>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{metrics.totalStock.toLocaleString()}</p>
         </div>
       </div>
 
       {/* Main Table Card */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         {/* Filter Tabs & Search Header */}
-        <div className="border-b border-slate-100 p-4 space-y-3">
+        <div className="border-b border-slate-100 p-3.5 sm:p-4 space-y-3">
           {/* Status Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 text-sm">
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs sm:text-sm">
             <button
               onClick={() => setActiveTab("all")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
+              className={`rounded-lg px-2.5 sm:px-3 py-1.5 font-medium whitespace-nowrap transition-colors ${
                 activeTab === "all"
                   ? "bg-slate-100 text-slate-900 font-semibold"
                   : "text-slate-500 hover:text-slate-900"
@@ -245,7 +245,7 @@ export default function AdminProductsPage() {
             </button>
             <button
               onClick={() => setActiveTab("active")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
+              className={`rounded-lg px-2.5 sm:px-3 py-1.5 font-medium whitespace-nowrap transition-colors ${
                 activeTab === "active"
                   ? "bg-slate-100 text-slate-900 font-semibold"
                   : "text-slate-500 hover:text-slate-900"
@@ -255,7 +255,7 @@ export default function AdminProductsPage() {
             </button>
             <button
               onClick={() => setActiveTab("draft")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
+              className={`rounded-lg px-2.5 sm:px-3 py-1.5 font-medium whitespace-nowrap transition-colors ${
                 activeTab === "draft"
                   ? "bg-slate-100 text-slate-900 font-semibold"
                   : "text-slate-500 hover:text-slate-900"
@@ -265,7 +265,7 @@ export default function AdminProductsPage() {
             </button>
             <button
               onClick={() => setActiveTab("low_stock")}
-              className={`rounded-lg px-3 py-1.5 font-medium transition-colors ${
+              className={`rounded-lg px-2.5 sm:px-3 py-1.5 font-medium whitespace-nowrap transition-colors ${
                 activeTab === "low_stock"
                   ? "bg-amber-100 text-amber-900 font-semibold"
                   : "text-slate-500 hover:text-slate-900"
@@ -283,7 +283,7 @@ export default function AdminProductsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search products by title, category, or SKU..."
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:bg-white focus:outline-none transition"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:bg-white focus:outline-none transition"
             />
             {searchQuery && (
               <button
@@ -316,7 +316,7 @@ export default function AdminProductsPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-left text-sm border-collapse min-w-[640px]">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/75 text-xs font-semibold uppercase text-slate-500 tracking-wider">
                   <th className="py-3 px-4">Product</th>

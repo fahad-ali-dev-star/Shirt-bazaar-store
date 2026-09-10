@@ -64,29 +64,29 @@ export function SizeAdvisorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 shadow-2xl transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl sm:rounded-3xl bg-white p-4 sm:p-6 shadow-2xl transition-all max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between border-b pb-4 border-slate-100">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-              <Sparkles className="h-5 w-5" />
+        <div className="flex items-center justify-between border-b pb-3 sm:pb-4 border-slate-100">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 shrink-0">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">AI Fit & Size Advisor</h2>
-              <p className="text-xs text-slate-500">Personalized fitting powered by Gemini</p>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">AI Fit & Size Advisor</h2>
+              <p className="text-[11px] sm:text-xs text-slate-500">Personalized fitting powered by Gemini</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {!result ? (
-          <form onSubmit={handleCalculate} className="mt-5 space-y-4">
+          <form onSubmit={handleCalculate} className="mt-4 sm:mt-5 space-y-3.5 sm:space-y-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Your Height (cm)
@@ -99,9 +99,9 @@ export function SizeAdvisorModal({
                   value={heightCm}
                   onChange={(e) => setHeightCm(Number(e.target.value))}
                   required
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 sm:py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
                 />
-                <span className="absolute right-3 top-2.5 text-xs text-slate-400">cm</span>
+                <span className="absolute right-3 top-2 sm:top-2.5 text-xs text-slate-400">cm</span>
               </div>
             </div>
 
@@ -117,9 +117,9 @@ export function SizeAdvisorModal({
                   value={weightKg}
                   onChange={(e) => setWeightKg(Number(e.target.value))}
                   required
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 sm:py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none"
                 />
-                <span className="absolute right-3 top-2.5 text-xs text-slate-400">kg</span>
+                <span className="absolute right-3 top-2 sm:top-2.5 text-xs text-slate-400">kg</span>
               </div>
             </div>
 
@@ -133,9 +133,9 @@ export function SizeAdvisorModal({
                     key={fit}
                     type="button"
                     onClick={() => setFitPreference(fit)}
-                    className={`rounded-xl py-2.5 text-xs font-semibold capitalize border transition-all ${
+                    className={`rounded-xl py-2 sm:py-2.5 text-xs font-semibold capitalize border transition-all ${
                       fitPreference === fit
-                        ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm"
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-xs"
                         : "border-slate-200 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
@@ -150,7 +150,7 @@ export function SizeAdvisorModal({
             <button
               type="submit"
               disabled={loading}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-600 py-3.5 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-all cursor-pointer"
+              className="mt-5 sm:mt-6 flex w-full items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-indigo-600 py-3 sm:py-3.5 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 disabled:opacity-50 transition-all cursor-pointer"
             >
               {loading ? (
                 <>

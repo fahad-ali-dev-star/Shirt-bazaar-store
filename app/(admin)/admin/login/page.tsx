@@ -108,7 +108,7 @@ function AdminLoginForm() {
       <div className="absolute -bottom-12 -right-12 h-64 w-64 rounded-full bg-purple-600/20 blur-3xl"></div>
 
       {/* Card Wrapper */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 p-8 shadow-2xl backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/50 p-5 sm:p-8 shadow-2xl backdrop-blur-xl">
         {/* Shield Header Icon */}
         <div className="mb-6 flex justify-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/25">

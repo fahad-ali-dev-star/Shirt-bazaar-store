@@ -73,25 +73,25 @@ export default function CartPage() {
   const finalTotal = discountedTotal();
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-14 animate-fade-in">
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:py-14 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-10">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Shopping Cart</h1>
-          <p className="mt-1 text-sm text-slate-500">{items.length} item{items.length !== 1 ? "s" : ""} in your cart</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Shopping Cart</h1>
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-slate-500">{items.length} item{items.length !== 1 ? "s" : ""} in your cart</p>
         </div>
-        <Link href="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-brand-600 transition-colors">
+        <Link href="/" className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 hover:text-brand-600 transition-colors self-start sm:self-auto">
           <ArrowLeft size={14} /> Continue Shopping
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         {/* ── Cart Items ── */}
         <div className="lg:col-span-8 space-y-3">
           {items.map((item) => (
-            <div key={item.variantId} className="card card-hover p-5 flex flex-col sm:flex-row items-start sm:items-center gap-5 group">
+            <div key={item.variantId} className="card card-hover p-4 sm:p-5 flex flex-row items-start sm:items-center gap-3.5 sm:gap-5 group">
               {/* Image */}
-              <div className="h-24 w-24 sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-2xl bg-slate-50 border border-slate-100">
+              <div className="h-20 w-20 sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-100">
                 {item.image ? (
                   <Image
                     src={item.image}
@@ -101,30 +101,32 @@ export default function CartPage() {
                     className="h-full w-full object-cover transition-transform group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-3xl text-slate-200 select-none">
+                  <div className="w-full h-full flex items-center justify-center text-2xl sm:text-3xl text-slate-200 select-none">
                     👕
                   </div>
                 )}
               </div>
 
               {/* Info */}
-              <div className="flex-1 flex flex-col sm:flex-row justify-between w-full gap-4">
-                <div>
-                  <h3 className="font-semibold text-slate-900 group-hover:text-brand-600 transition-colors">
+              <div className="flex-1 flex flex-col sm:flex-row justify-between w-full gap-3 sm:gap-4 min-w-0">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
                     {item.productName}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-0.5 text-xs text-slate-500">
                     {item.size} · {item.color}
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-slate-800">Rs {item.price} <span className="text-slate-400 font-normal">each</span></p>
+                  <p className="mt-1.5 text-xs sm:text-sm font-bold text-slate-800">
+                    Rs {item.price} <span className="text-slate-400 font-normal text-xs">each</span>
+                  </p>
                 </div>
 
-                <div className="flex items-center gap-4 sm:justify-end">
+                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
                   {/* Quantity stepper */}
                   <div className="flex items-center bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
                     <button
                       onClick={() => setQty(item.variantId, Math.max(1, item.qty - 1))}
-                      className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors font-bold text-lg"
+                      className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors font-bold text-base sm:text-lg active:scale-95"
                     >
                       −
                     </button>
@@ -134,28 +136,28 @@ export default function CartPage() {
                       max={item.stockQty}
                       value={item.qty}
                       onChange={(e) => setQty(item.variantId, Number(e.target.value))}
-                      className="w-10 bg-transparent text-center font-semibold text-sm border-0 focus:ring-0 p-0"
+                      className="w-9 sm:w-10 bg-transparent text-center font-semibold text-xs sm:text-sm border-0 focus:ring-0 p-0"
                     />
                     <button
                       onClick={() => setQty(item.variantId, Math.min(item.stockQty, item.qty + 1))}
-                      className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors font-bold text-lg"
+                      className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors font-bold text-base sm:text-lg active:scale-95"
                     >
                       +
                     </button>
                   </div>
 
                   {/* Line subtotal */}
-                  <p className="w-24 text-right font-bold text-slate-900 hidden sm:block">
+                  <p className="text-right font-bold text-sm sm:text-base text-slate-900 min-w-[70px]">
                     Rs {(item.price * item.qty).toFixed(0)}
                   </p>
 
                   {/* Remove */}
                   <button
                     onClick={() => removeItem(item.variantId)}
-                    className="p-2 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                    className="p-1.5 sm:p-2 rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
                     title="Remove item"
                   >
-                    <Trash2 size={17} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -165,7 +167,7 @@ export default function CartPage() {
 
         {/* ── Order Summary ── */}
         <div className="lg:col-span-4">
-          <div className="card p-6 sticky top-24 space-y-5">
+          <div className="card p-5 sm:p-6 sticky top-24 space-y-4 sm:space-y-5">
             <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <ShoppingBag size={16} className="text-brand-500" />
               Order Summary
@@ -213,12 +215,12 @@ export default function CartPage() {
                       }}
                       onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
                       placeholder="e.g. SAVE20"
-                      className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200"
+                      className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-sm font-mono font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200 min-w-0"
                     />
                     <button
                       onClick={handleApplyCoupon}
                       disabled={couponLoading || !couponInput.trim()}
-                      className="shrink-0 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+                      className="shrink-0 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       {couponLoading ? <Loader2 size={13} className="animate-spin" /> : null}
                       Apply
@@ -235,7 +237,7 @@ export default function CartPage() {
             </div>
 
             {/* Price Breakdown */}
-            <div className="space-y-2 text-sm text-slate-600 pb-4 border-b border-slate-100">
+            <div className="space-y-2 text-xs sm:text-sm text-slate-600 pb-4 border-b border-slate-100">
               {items.map((item) => (
                 <div key={item.variantId} className="flex justify-between">
                   <span className="truncate mr-2 text-slate-500">
@@ -270,24 +272,24 @@ export default function CartPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-base font-bold text-slate-900">Total</span>
+              <span className="text-sm sm:text-base font-bold text-slate-900">Total</span>
               <div className="text-right">
                 {discount > 0 && (
                   <p className="text-xs line-through text-slate-400 font-medium">Rs {sub.toFixed(2)}</p>
                 )}
-                <span className="text-2xl font-extrabold text-brand-600">Rs {finalTotal.toFixed(2)}</span>
+                <span className="text-xl sm:text-2xl font-extrabold text-brand-600">Rs {finalTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <button
               onClick={() => router.push("/checkout")}
-              className="btn-primary w-full py-4 text-sm rounded-xl"
+              className="btn-primary w-full py-3.5 sm:py-4 text-sm rounded-xl cursor-pointer"
             >
               Proceed to Checkout
               <ArrowRight size={16} />
             </button>
 
-            <div className="flex items-center justify-center gap-4 text-[11px] text-slate-400">
+            <div className="flex items-center justify-center gap-3 sm:gap-4 text-[10px] sm:text-[11px] text-slate-400">
               <span className="flex items-center gap-1"><ShieldCheck size={12} /> Secure</span>
               <span>·</span>
               <span className="flex items-center gap-1"><Truck size={12} /> Fast Delivery</span>
