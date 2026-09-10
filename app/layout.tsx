@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { PromoBar } from "@/components/promo-bar";
 import { NavBar } from "./nav-bar";
+import { TopLoader } from "@/components/top-loader";
 import Link from "next/link";
 
 const inter = Inter({
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${plusJakarta.variable}`} suppressHydrationWarning>
       <body className="min-h-screen bg-[#f8f8fb] text-slate-900 antialiased flex flex-col font-sans" suppressHydrationWarning>
+        <TopLoader />
         <PromoBar />
         <NavBar />
         <div className="flex-1">

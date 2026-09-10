@@ -140,7 +140,7 @@ export default async function HomePage({ searchParams }: Props) {
                 <Link
                   key={p.id}
                   href={`/products/${p.slug}`}
-                  className="group flex flex-col animate-slide-up card-hover rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-xs"
+                  className="group flex flex-col animate-slide-up card-hover rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
                   style={{ animationDelay: `${idx * 60}ms` }}
                 >
                   {/* Image */}
