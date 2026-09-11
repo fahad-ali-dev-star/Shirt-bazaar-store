@@ -118,10 +118,12 @@ export async function POST(req: NextRequest) {
 
     // Try Gemini AI first if configured
     if (apiKey) {
-      try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+      const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+      for (const model of models) {
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-        const prompt = `You are an expert fashion stylist and apparel sizing advisor for Shirt Bazaar.
+          const prompt = `You are an expert fashion stylist and apparel sizing advisor for Shirt Bazaar.
 Analyze the following customer physical body details and calculate the optimal shirt size recommendation:
 - Customer Height: ${numHeight} cm
 - Customer Weight: ${numWeight} kg
@@ -136,54 +138,52 @@ Respond with a JSON object containing:
 
 Respond ONLY with pure JSON without markdown formatting.`;
 
-        const res = await fetch(geminiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(8000), // 8-second timeout to prevent hanging
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              response_mime_type: "application/json",
-              temperature: 0.2,
-              maxOutputTokens: 500,
-            },
-          }),
-        });
+          const res = await fetch(geminiUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(6000),
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                response_mime_type: "application/json",
+                temperature: 0.2,
+                maxOutputTokens: 500,
+              },
+            }),
+          });
 
-        if (res.ok) {
-          const resData = await res.json();
-          const generatedText = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (res.ok) {
+            const resData = await res.json();
+            const generatedText = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-          if (generatedText) {
-            const parsedData = JSON.parse(generatedText);
-            const size = parsedData.recommendedSize;
-            // Verify size is in available sizes
-            const isValidSize = availableSizes.some(
-              (s) => s.trim().toUpperCase() === String(size).trim().toUpperCase()
-            );
+            if (generatedText) {
+              let cleanJson = generatedText.trim();
+              if (cleanJson.startsWith("```")) {
+                cleanJson = cleanJson.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+              }
+              const parsedData = JSON.parse(cleanJson);
+              const size = parsedData.recommendedSize;
+              const isValidSize = availableSizes.some(
+                (s) => s.trim().toUpperCase() === String(size).trim().toUpperCase()
+              );
 
-            if (isValidSize) {
-              return NextResponse.json({
-                success: true,
-                recommendation: {
-                  recommendedSize: size,
-                  confidenceScore: Number(parsedData.confidenceScore) || 92,
-                  fitAnalysis:
-                    parsedData.fitAnalysis ||
-                    `Size ${size} provides the best fit based on your height and build.`,
-                },
-              });
+              if (isValidSize) {
+                return NextResponse.json({
+                  success: true,
+                  recommendation: {
+                    recommendedSize: size,
+                    confidenceScore: Number(parsedData.confidenceScore) || 92,
+                    fitAnalysis:
+                      parsedData.fitAnalysis ||
+                      `Size ${size} provides the best fit based on your height and build.`,
+                  },
+                });
+              }
             }
           }
-        } else {
-          const errText = await res.text();
-          console.warn("[size-recommendation] Gemini API error, falling back to algorithm:", res.status, errText);
+        } catch {
+          // Continue to next model or rule-based fallback
         }
-      } catch (geminiError) {
-        console.warn(
-          "[size-recommendation] Gemini fetch timed out or failed, using algorithmic fallback:",
-          geminiError instanceof Error ? geminiError.message : geminiError
-        );
       }
     }
 
