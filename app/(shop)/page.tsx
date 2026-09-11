@@ -1,4 +1,4 @@
-import { createPublicClient } from "@/lib/supabase/public";
+import { getCachedBanner, getCachedHomeProducts, searchProducts } from "@/lib/supabase/cached-queries";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -15,29 +15,11 @@ export default async function HomePage({ searchParams }: Props) {
   const rawQ = typeof resolvedParams.q === "string" ? resolvedParams.q.trim() : "";
   const q = rawQ.length > 0 ? rawQ.slice(0, 80) : undefined;
 
-  const supabase = createPublicClient();
-
-  // Fetch active hero banner
-  const { data: banner } = await supabase
-    .from("store_banners")
-    .select("*")
-    .eq("is_active", true)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .single();
-
-  let query = supabase
-    .from("products")
-    .select("id, name, slug, base_price, product_images(url, position)")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(24);
-
-  if (q) {
-    query = query.ilike("name", `%${q}%`);
-  }
-
-  const { data: products } = await query;
+  // Parallel cached fetch for instant response
+  const [banner, products] = await Promise.all([
+    getCachedBanner(),
+    q ? searchProducts(q) : getCachedHomeProducts(),
+  ]);
 
   return (
     <main className="w-full animate-fade-in">

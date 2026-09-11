@@ -7,6 +7,8 @@ import { AddToCartForm } from "./add-to-cart-form";
 import { ProductImageGallery } from "./gallery";
 import type { Metadata } from "next";
 
+import { getCachedProductBySlug, getCachedHomeProducts } from "@/lib/supabase/cached-queries";
+
 export const revalidate = 3600;
 
 type Props = {
@@ -15,14 +17,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = createPublicClient();
-
-  const { data: product } = await supabase
-    .from("products")
-    .select("name, description, base_price, product_images(url, position)")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .single();
+  const product = await getCachedProductBySlug(slug);
 
   if (!product) {
     return { title: "Product Not Found | Shirt Bazaar" };
@@ -50,16 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const supabase = createPublicClient();
-
-  const { data: product } = await supabase
-    .from("products")
-    .select(
-      "id, name, slug, description, category, base_price, product_images(url, position), product_variants(id, size, color, stock_qty, price_override)"
-    )
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .single();
+  const product = await getCachedProductBySlug(slug);
 
   if (!product) return notFound();
 
@@ -77,19 +63,9 @@ export default async function ProductPage({ params }: Props) {
   }[];
   const totalStock = rawVariants.reduce((s, v) => s + v.stock_qty, 0);
 
-  // Fetch related products (same category or recent drops)
-  let relatedQuery = supabase
-    .from("products")
-    .select("id, name, slug, base_price, category, product_images(url, position)")
-    .eq("is_active", true)
-    .neq("id", product.id)
-    .limit(4);
-
-  if (product.category) {
-    relatedQuery = relatedQuery.eq("category", product.category);
-  }
-
-  const { data: relatedProducts } = await relatedQuery;
+  // Fetch related products (from cached catalog for instant speed)
+  const allHomeProducts = await getCachedHomeProducts();
+  const relatedProducts = allHomeProducts.filter((p) => p.id !== product.id).slice(0, 4);
 
   return (
     <main className="animate-fade-in">

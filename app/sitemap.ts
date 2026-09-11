@@ -24,11 +24,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    // Dynamic active products
-    const { data: products } = await supabase
+    const fetchPromise = supabase
       .from("products")
       .select("slug, updated_at, category")
       .eq("is_active", true);
+
+    const timeoutPromise = new Promise<{ data: null }>((resolve) =>
+      setTimeout(() => resolve({ data: null }), 2000)
+    );
+
+    const { data: products } = await Promise.race([fetchPromise, timeoutPromise]);
 
     if (products) {
       products.forEach((p) => {

@@ -30,31 +30,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+import { getCachedCategoryProducts } from "@/lib/supabase/cached-queries";
+
 export default async function CategoryPage({ params }: Props) {
   const { slug } = await params;
   const categoryTitle = formatCategoryTitle(slug);
-  const supabase = createPublicClient();
-
-  const { data: products } = await supabase
-    .from("products")
-    .select("id, name, slug, base_price, category, product_images(url, position)")
-    .ilike("category", slug.replace(/-/g, " "))
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(36);
-
-  // Fallback: Also search exact slug match if ilike with spaces returned empty
-  let finalProducts = products;
-  if (!finalProducts || finalProducts.length === 0) {
-    const { data: exactMatch } = await supabase
-      .from("products")
-      .select("id, name, slug, base_price, category, product_images(url, position)")
-      .eq("category", slug)
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(36);
-    finalProducts = exactMatch;
-  }
+  const finalProducts = await getCachedCategoryProducts(slug);
 
   return (
     <main className="animate-fade-in min-h-[70vh]">

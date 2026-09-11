@@ -49,7 +49,7 @@ export const OrderConfirmationEmail = ({
               {isCod
                 ? "Cash on Delivery (COD)"
                 : isJazzCash
-                ? "JazzCash (Direct Transfer)"
+                ? "JazzCash Business Merchant (FAHAD Shop)"
                 : isEasypaisa
                 ? "Easypaisa (Direct Transfer)"
                 : "Card (Stripe)"}

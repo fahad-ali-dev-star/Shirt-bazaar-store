@@ -38,17 +38,17 @@ function SuccessContent() {
       )}
 
       {method === "jazzcash" && (
-        <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 sm:p-5 text-left text-xs sm:text-sm text-red-950 shadow-2xs">
+        <div className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5 text-left text-xs sm:text-sm text-amber-950 shadow-2xs">
           <p className="font-semibold flex items-center gap-2 text-sm sm:text-base">
-            <span>📱 Payment Method: JazzCash (Direct Transfer)</span>
+            <span>📱 Payment Method: JazzCash Business Merchant (FAHAD Shop)</span>
           </p>
           {tid && (
-            <p className="mt-1.5 font-mono text-xs font-bold text-red-800 bg-red-100/70 inline-block px-2.5 py-1 rounded-lg">
+            <p className="mt-1.5 font-mono text-xs font-bold text-amber-900 bg-amber-200/80 inline-block px-2.5 py-1 rounded-lg border border-amber-300">
               Submitted TID: {tid}
             </p>
           )}
-          <p className="mt-2 text-xs text-red-800 leading-relaxed">
-            We have received your payment Transaction ID. Our team will verify the transfer in our JazzCash merchant ledger and proceed with packaging your items.
+          <p className="mt-2 text-xs text-amber-900 leading-relaxed">
+            We have received your payment Transaction ID. Our team will verify the transfer in our JazzCash merchant ledger (Till ID: 984456353) and proceed with packaging your items.
           </p>
         </div>
       )}

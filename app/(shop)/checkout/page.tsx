@@ -239,8 +239,8 @@ function CheckoutForm() {
                     id: "jazzcash",
                     icon: "📱",
                     title: "JazzCash",
-                    desc: "Transfer via JazzCash App or *786# and provide Transaction ID.",
-                    badge: "Direct Wallet",
+                    desc: "Scan Merchant QR, dial *786*10# (Till ID: 984456353), or pay via Raast.",
+                    badge: "Business Merchant",
                     disabled: false,
                   },
                   {
@@ -296,7 +296,7 @@ function CheckoutForm() {
                             opt.id === "cod"
                               ? "bg-amber-100 text-amber-800"
                               : opt.id === "jazzcash"
-                              ? "bg-red-100 text-red-800"
+                              ? "bg-amber-100 text-amber-900 border border-amber-300"
                               : opt.id === "easypaisa"
                               ? "bg-emerald-100 text-emerald-800"
                               : "bg-slate-200 text-slate-500"
@@ -327,15 +327,27 @@ function CheckoutForm() {
                     brandColor={WALLET_CONFIGS[paymentMethod].brandColor}
                     bgLight={WALLET_CONFIGS[paymentMethod].bgLight}
                     borderColor={WALLET_CONFIGS[paymentMethod].borderColor}
+                    tillId={WALLET_CONFIGS[paymentMethod].tillId}
+                    isMerchant={WALLET_CONFIGS[paymentMethod].isMerchant}
+                    ussdCode={WALLET_CONFIGS[paymentMethod].ussdCode}
+                    posterImage={WALLET_CONFIGS[paymentMethod].posterImage}
                   />
 
-                  {/* Cross-network warning */}
-                  <div className="rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-3 text-xs text-amber-900">
-                    <p className="font-semibold mb-1">⚠️ Important — Pay from the same network</p>
+                  {/* Verification note */}
+                  <div className={`rounded-xl border px-3.5 py-3 text-xs ${
+                    paymentMethod === "jazzcash"
+                      ? "bg-amber-50/80 border-amber-200 text-amber-900"
+                      : "bg-emerald-50/80 border-emerald-200 text-emerald-900"
+                  }`}>
+                    <p className="font-semibold mb-1">
+                      {paymentMethod === "jazzcash"
+                        ? "⚡ Instant Payment Verification"
+                        : "⚠️ Important — Pay from the same network"}
+                    </p>
                     <p className="leading-relaxed">
                       {paymentMethod === "jazzcash"
-                        ? "Please send from a JazzCash account to our JazzCash number. Cross-network payments are harder to verify."
-                        : "Please send from an Easypaisa account to our Easypaisa number. Cross-network payments are harder to verify."}
+                        ? "Make sure you confirm 'FAHAD Shop' (Till ID: 984456353) when completing payment. Once transferred, enter the Transaction ID (TID) from your JazzCash receipt below."
+                        : "Please send from an Easypaisa account to our Easypaisa number. Cross-network payments take longer to verify."}
                     </p>
                   </div>
 
@@ -349,13 +361,13 @@ function CheckoutForm() {
                         id="walletTid"
                         required
                         type="text"
-                        placeholder="e.g. TJ240910123456 or 12345678"
+                        placeholder="e.g. 1234567890 or TJ240910123456"
                         value={transactionId}
                         onChange={(e) => setTransactionId(e.target.value)}
                         className={`${inputCls} bg-white`}
                       />
                       <p className="text-[11px] text-slate-500 mt-1">
-                        From the SMS/notification you received after payment.
+                        From the SMS/receipt you received after payment.
                       </p>
                     </div>
 

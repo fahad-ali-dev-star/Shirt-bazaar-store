@@ -38,10 +38,20 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Retrieve current user and refresh token
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Retrieve current user and refresh token (with 3s timeout for paused Supabase)
+  let user: { email?: string | null } | null = null;
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("auth timeout")), 3000)
+      ),
+    ]);
+    user = result.data?.user ?? null;
+  } catch {
+    // Supabase unavailable — treat as unauthenticated, let /admin/login through
+    user = null;
+  }
 
   const adminEmails = (process.env.ADMIN_EMAILS ?? "")
     .split(",")

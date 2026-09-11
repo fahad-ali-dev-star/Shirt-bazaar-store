@@ -57,7 +57,7 @@ export function HeroBanner({ banner }: HeroBannerProps) {
           priority
           sizes="100vw"
           className={`w-full h-full ${imageFit} object-center`}
-          quality={90}
+          quality={80}
         />
 
         {/* Dynamic vignette */}

@@ -150,6 +150,7 @@ export async function PATCH(
   if (product?.slug) {
     revalidatePath(`/products/${product.slug}`);
   }
+  revalidatePath("/");
 
   return NextResponse.json({ product });
 }
@@ -169,5 +170,6 @@ export async function DELETE(
   const { error } = await supabase.from("products").update({ is_active: false }).eq("id", id);
 
   if (error) return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+  revalidatePath("/");
   return NextResponse.json({ success: true });
 }

@@ -86,6 +86,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    try {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/");
+    } catch {}
+
     return NextResponse.json({ product });
   } catch (err) {
     logServerError("Admin product request failed", err);

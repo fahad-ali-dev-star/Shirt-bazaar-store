@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 
@@ -81,6 +81,11 @@ export async function PUT(req: Request) {
     if (result.error) {
       return NextResponse.json({ error: result.error.message }, { status: 400 });
     }
+
+    try {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/");
+    } catch {}
 
     return NextResponse.json({ banner: result.data });
   } catch (err: unknown) {

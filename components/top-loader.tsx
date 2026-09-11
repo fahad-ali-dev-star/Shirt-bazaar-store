@@ -72,8 +72,10 @@ function TopLoaderInner() {
 
       try {
         const url = new URL(href, window.location.href);
-        if (url.pathname === pathname && url.search === (searchParams ? searchParams.toString() : "") && !url.hash) {
-          return;
+        if (url.pathname === pathname) {
+          if (url.hash || url.search === (searchParams ? searchParams.toString() : "")) {
+            return;
+          }
         }
       } catch {
         return;

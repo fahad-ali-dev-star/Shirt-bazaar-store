@@ -18,7 +18,7 @@ const STANDARD_CODES: Record<string, { percent: number; desc: string }> = {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const rawCode = body?.code;
+    const rawCode = body?.code || body?.couponCode;
 
     if (!rawCode || typeof rawCode !== "string" || !rawCode.trim()) {
       return NextResponse.json({ valid: false, error: "Please enter a coupon code" }, { status: 400 });
