@@ -21,7 +21,19 @@ export default function AdminOrdersPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function updatePaymentStatus(orderId: string, payment_status: AdminOrder["payment_status"]) {
+  async function updatePaymentStatus(
+    orderId: string,
+    payment_status: AdminOrder["payment_status"] | "failed"
+  ) {
+    if (
+      payment_status === "failed" &&
+      !window.confirm(
+        "Are you sure you want to REJECT this payment? This will cancel the order and RESTORE the reserved inventory stock."
+      )
+    ) {
+      return;
+    }
+
     const response = await fetch("/api/admin/orders", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -35,7 +47,15 @@ export default function AdminOrdersPage() {
     }
 
     setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, payment_status } : o))
+      prev.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              payment_status: payment_status as AdminOrder["payment_status"],
+              status: payment_status === "failed" ? "cancelled" : o.status,
+            }
+          : o
+      )
     );
   }
 
@@ -206,12 +226,20 @@ export default function AdminOrdersPage() {
                   <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">{order.payment_reference}</span>
                 </div>
                 {order.payment_status !== "paid" && (order.payment_method === "jazzcash" || order.payment_method === "easypaisa") && (
-                  <button
-                    onClick={() => updatePaymentStatus(order.id, "paid")}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-colors shadow-xs"
-                  >
-                    ✓ Confirm TID & Mark Paid
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => updatePaymentStatus(order.id, "paid")}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-colors shadow-xs"
+                    >
+                      ✓ Confirm TID & Mark Paid
+                    </button>
+                    <button
+                      onClick={() => updatePaymentStatus(order.id, "failed")}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-colors shadow-xs"
+                    >
+                      ✗ Reject & Restore Stock
+                    </button>
+                  </div>
                 )}
               </div>
             )}

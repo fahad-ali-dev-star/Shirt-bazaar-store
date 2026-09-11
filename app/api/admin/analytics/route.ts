@@ -66,12 +66,25 @@ export async function GET(req: NextRequest) {
     });
 
     // Payment methods
-    const paymentBreakdown = {
+    const paymentBreakdown: Record<string, { count: number; revenue: number }> = {
       cod: { count: 0, revenue: 0 },
+      jazzcash: { count: 0, revenue: 0 },
+      easypaisa: { count: 0, revenue: 0 },
       stripe: { count: 0, revenue: 0 },
     };
     nonCancelledOrders.forEach((o) => {
-      const method = o.payment_method === "cod" ? "cod" : "stripe";
+      const method =
+        o.payment_method === "jazzcash"
+          ? "jazzcash"
+          : o.payment_method === "easypaisa"
+          ? "easypaisa"
+          : o.payment_method === "cod"
+          ? "cod"
+          : "stripe";
+
+      if (!paymentBreakdown[method]) {
+        paymentBreakdown[method] = { count: 0, revenue: 0 };
+      }
       paymentBreakdown[method].count += 1;
       paymentBreakdown[method].revenue += Number(o.total || 0);
     });

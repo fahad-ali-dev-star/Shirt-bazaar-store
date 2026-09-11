@@ -35,6 +35,8 @@ interface AnalyticsData {
   };
   paymentBreakdown: {
     cod: { count: number; revenue: number };
+    jazzcash?: { count: number; revenue: number };
+    easypaisa?: { count: number; revenue: number };
     stripe: { count: number; revenue: number };
   };
   dailySales: Array<{ date: string; label: string; revenue: number; orders: number }>;
@@ -124,9 +126,16 @@ export default function AdminAnalyticsPage() {
 
   const { kpis, statusCounts, paymentBreakdown, dailySales, topProducts, lowStockVariants, recentOrders } = data;
   const maxDailyRevenue = Math.max(...dailySales.map((d) => d.revenue), 1000);
-  const totalPaymentVol = paymentBreakdown.cod.revenue + paymentBreakdown.stripe.revenue || 1;
-  const stripePercent = Math.round((paymentBreakdown.stripe.revenue / totalPaymentVol) * 100);
-  const codPercent = 100 - stripePercent;
+  const jcRev = paymentBreakdown.jazzcash?.revenue || 0;
+  const epRev = paymentBreakdown.easypaisa?.revenue || 0;
+  const codRev = paymentBreakdown.cod?.revenue || 0;
+  const stripeRev = paymentBreakdown.stripe?.revenue || 0;
+  const totalPaymentVol = codRev + stripeRev + jcRev + epRev || 1;
+
+  const codPercent = Math.round((codRev / totalPaymentVol) * 100);
+  const jcPercent = Math.round((jcRev / totalPaymentVol) * 100);
+  const epPercent = Math.round((epRev / totalPaymentVol) * 100);
+  const stripePercent = Math.round((stripeRev / totalPaymentVol) * 100);
 
   return (
     <div className="space-y-8 animate-fade-in pb-12">
@@ -303,13 +312,13 @@ export default function AdminAnalyticsPage() {
             <p className="text-xs text-slate-500 mb-6">Payment channels & fulfillment status</p>
 
             {/* Payment Method Split */}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5 flex-wrap gap-1">
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1 flex-wrap gap-1">
                   <span className="flex items-center gap-1.5">
                     <Banknote size={14} className="text-amber-600" /> Cash on Delivery (COD)
                   </span>
-                  <span>Rs {paymentBreakdown.cod.revenue.toLocaleString()} ({paymentBreakdown.cod.count})</span>
+                  <span>Rs {codRev.toLocaleString()} ({paymentBreakdown.cod.count})</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
@@ -320,11 +329,41 @@ export default function AdminAnalyticsPage() {
               </div>
 
               <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1.5 flex-wrap gap-1">
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1 flex-wrap gap-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-xs">📱</span> JazzCash
+                  </span>
+                  <span>Rs {jcRev.toLocaleString()} ({paymentBreakdown.jazzcash?.count || 0})</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    style={{ width: `${jcPercent}%` }}
+                    className="h-full bg-red-500 rounded-full transition-all duration-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1 flex-wrap gap-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-xs">🟢</span> Easypaisa
+                  </span>
+                  <span>Rs {epRev.toLocaleString()} ({paymentBreakdown.easypaisa?.count || 0})</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    style={{ width: `${epPercent}%` }}
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1 flex-wrap gap-1">
                   <span className="flex items-center gap-1.5">
                     <CreditCard size={14} className="text-blue-600" /> Stripe / Cards
                   </span>
-                  <span>Rs {paymentBreakdown.stripe.revenue.toLocaleString()} ({paymentBreakdown.stripe.count})</span>
+                  <span>Rs {stripeRev.toLocaleString()} ({paymentBreakdown.stripe.count})</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div

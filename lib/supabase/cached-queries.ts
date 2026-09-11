@@ -246,22 +246,33 @@ export async function getCachedCategoryProducts(slug: string): Promise<HomeProdu
 }
 
 export async function searchProducts(q: string): Promise<HomeProductItem[]> {
+  const cleanQ = q.trim();
+  if (!cleanQ) return [];
+
   return withTimeout(
     async () => {
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, slug, base_price, product_images(url, position)")
+        .select("id, name, slug, category, base_price, product_images(url, position)")
         .eq("is_active", true)
-        .ilike("name", `%${q}%`)
+        .or(`name.ilike.%${cleanQ}%,category.ilike.%${cleanQ}%,description.ilike.%${cleanQ}%`)
         .order("created_at", { ascending: false })
-        .limit(24);
+        .limit(36);
 
-      if (error || !data) return [];
+      if (error || !data || data.length === 0) {
+        const queryLower = cleanQ.toLowerCase();
+        return FALLBACK_PRODUCTS.filter(
+          (p) =>
+            p.name.toLowerCase().includes(queryLower) ||
+            p.slug.toLowerCase().includes(queryLower) ||
+            (p.category && p.category.toLowerCase().includes(queryLower))
+        );
+      }
       return data as any;
     },
     3000,
-    []
+    FALLBACK_PRODUCTS.filter((p) => p.name.toLowerCase().includes(cleanQ.toLowerCase()))
   );
 }
 

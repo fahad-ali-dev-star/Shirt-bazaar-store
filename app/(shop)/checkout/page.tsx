@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Lock, ChevronRight, Tag, Copy, Check, Smartphone, Info } from "lucide-react";
 import { WALLET_CONFIGS } from "@/lib/payments/wallet-config";
 import { WalletQRCode } from "@/components/wallet-qr-code";
+import { calculateShipping, FREE_SHIPPING_THRESHOLD } from "@/lib/payments/shipping";
 
 /* ── Step indicator ── */
 function Step({ label, active, done }: { label: string; active: boolean; done: boolean }) {
@@ -46,6 +47,11 @@ function CheckoutForm() {
     address: "",
     city: "",
   });
+
+  const rawDiscounted = discountedTotal();
+  const shippingFee = calculateShipping(rawDiscounted, form.city);
+  const grandTotal = rawDiscounted + shippingFee;
+  const freeShippingDifference = Math.max(0, FREE_SHIPPING_THRESHOLD - rawDiscounted);
 
   function handleCopyAccount(accountNumber: string) {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -321,7 +327,7 @@ function CheckoutForm() {
                   <WalletQRCode
                     accountNumber={WALLET_CONFIGS[paymentMethod].accountNumber}
                     accountTitle={WALLET_CONFIGS[paymentMethod].accountTitle}
-                    amount={discountedTotal()}
+                    amount={grandTotal}
                     orderRef={`SB-${Date.now().toString().slice(-6)}`}
                     walletName={paymentMethod === "jazzcash" ? "JazzCash" : "Easypaisa"}
                     brandColor={WALLET_CONFIGS[paymentMethod].brandColor}
@@ -434,20 +440,35 @@ function CheckoutForm() {
                 </div>
               )}
 
-              <div className="flex justify-between text-slate-500">
-                <span>Shipping</span>
-                <span className="text-xs text-slate-400">Calculated at delivery</span>
+              <div className="flex justify-between text-slate-600">
+                <span className="flex items-center gap-1.5">
+                  <span>Shipping</span>
+                  {shippingFee === 0 && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+                      Free
+                    </span>
+                  )}
+                </span>
+                <span className={`font-semibold ${shippingFee === 0 ? "text-emerald-600" : "text-slate-900"}`}>
+                  {shippingFee === 0 ? "FREE" : `Rs ${shippingFee}`}
+                </span>
               </div>
+
+              {freeShippingDifference > 0 && (
+                <p className="text-[11px] text-amber-700 bg-amber-50 rounded-lg p-2 border border-amber-200">
+                  💡 Add <strong className="font-bold">Rs {freeShippingDifference.toFixed(0)}</strong> more to get <strong>FREE delivery</strong> across Pakistan!
+                </p>
+              )}
             </div>
 
             <div className="flex justify-between items-baseline mb-5 pt-3 border-t border-slate-100">
               <span className="text-sm font-bold text-slate-900">Total</span>
               <div className="text-right">
                 {appliedCoupon && discountAmount() > 0 && (
-                  <p className="text-xs line-through text-slate-400">Rs {subtotal().toFixed(2)}</p>
+                  <p className="text-xs line-through text-slate-400">Rs {(subtotal() + shippingFee).toFixed(2)}</p>
                 )}
                 <span className="text-xl sm:text-2xl font-extrabold text-brand-600">
-                  Rs {discountedTotal().toFixed(2)}
+                  Rs {grandTotal.toFixed(2)}
                 </span>
               </div>
             </div>

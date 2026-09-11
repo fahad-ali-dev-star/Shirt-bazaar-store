@@ -64,22 +64,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // 3. Dynamic parse for generic SAVE codes (e.g., SAVE30, SALE15)
-    if (code.startsWith("SAVE") || code.startsWith("SALE") || code.startsWith("OFF")) {
-      const numMatch = code.match(/\d+/);
-      if (numMatch) {
-        const percent = parseInt(numMatch[0], 10);
-        if (percent > 0 && percent <= 50) {
-          return NextResponse.json({
-            valid: true,
-            code,
-            discountPercent: percent,
-            description: `${percent}% Special Offer Discount`,
-          });
-        }
-      }
-    }
-
     return NextResponse.json(
       {
         valid: false,

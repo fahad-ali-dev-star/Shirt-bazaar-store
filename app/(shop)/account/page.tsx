@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SignOutButton } from "./sign-out-button";
+import { CancelOrderButton } from "./cancel-order-button";
 import type { CustomerOrder, OrderItemWithProduct } from "@/lib/supabase/types";
 import { Package, Truck, CheckCircle, Clock, XCircle, ExternalLink } from "lucide-react";
 import { getCourierTrackingUrl } from "@/lib/tracking";
@@ -198,6 +199,16 @@ export default async function AccountPage() {
                     );
                   })}
                 </ul>
+
+                {/* Order Footer Actions (Cancellation) */}
+                {(order.status === "pending" || order.status === "processing") && (
+                  <div className="bg-slate-50/70 border-t border-slate-100 px-4 sm:px-5 py-2.5 flex items-center justify-between gap-2 flex-wrap">
+                    <p className="text-[11px] text-slate-400">
+                      Need to make changes? You can cancel your order before it gets dispatched.
+                    </p>
+                    <CancelOrderButton orderId={order.id} />
+                  </div>
+                )}
               </div>
             );
           })}

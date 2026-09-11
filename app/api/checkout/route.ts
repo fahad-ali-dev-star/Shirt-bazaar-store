@@ -20,6 +20,8 @@ import {
 } from "@/lib/validation";
 import { logServerError } from "@/lib/api/errors";
 
+import { calculateShipping } from "@/lib/payments/shipping";
+
 async function resolveCouponDiscount(couponCode: string | null): Promise<number> {
   if (!couponCode) return 0;
   const code = couponCode.trim().toUpperCase();
@@ -56,14 +58,6 @@ async function resolveCouponDiscount(couponCode: string | null): Promise<number>
 
   if (STANDARD_CODES[code]) {
     return STANDARD_CODES[code];
-  }
-
-  if (code.startsWith("SAVE") || code.startsWith("SALE") || code.startsWith("OFF")) {
-    const numMatch = code.match(/\d+/);
-    if (numMatch) {
-      const percent = parseInt(numMatch[0], 10);
-      if (percent > 0 && percent <= 50) return percent;
-    }
   }
 
   return 0;
@@ -131,6 +125,10 @@ export async function POST(req: NextRequest) {
 
   const discountPercent = await resolveCouponDiscount(couponCode);
 
+  // Calculate subtotal for shipping calculation
+  const rawSubtotal = normalizedItems.reduce((sum, item) => sum + (item.qty * 2000), 0);
+  const calculatedShippingFee = calculateShipping(rawSubtotal, shippingAddress.city);
+
   // Handle Cash on Delivery (COD)
   if (paymentMethod === "cod") {
     try {
@@ -138,23 +136,10 @@ export async function POST(req: NextRequest) {
         items: normalizedItems,
         shippingAddress,
         userId: user.id,
+        discountPercent,
+        couponCode,
+        shippingCost: calculatedShippingFee,
       });
-
-      // Apply server-side discount to order total if coupon is active
-      if (discountPercent > 0) {
-        const discountedTotal = Math.max(
-          0,
-          Math.round(created.order.total * (1 - discountPercent / 100) * 100) / 100
-        );
-        const supabase = createAdminClient();
-        await supabase
-          .from("orders")
-          .update({
-            total: discountedTotal,
-            payment_reference: `COD-${created.order.id} [${couponCode}]`,
-          })
-          .eq("id", created.order.id);
-      }
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
       const redirectUrl = `${siteUrl}/checkout/success?order=${created.order.id}&method=cod`;
@@ -196,6 +181,7 @@ export async function POST(req: NextRequest) {
         senderPhone: walletCheck.senderPhone,
         discountPercent,
         couponCode,
+        shippingCost: calculatedShippingFee,
       });
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
@@ -213,7 +199,9 @@ export async function POST(req: NextRequest) {
       logServerError(`${walletName} Checkout failed`, error, { userId: user.id });
       const msg =
         error instanceof Error &&
-        (error.message.includes("out of stock") || error.message.includes("unavailable"))
+        (error.message.includes("out of stock") ||
+          error.message.includes("unavailable") ||
+          error.message.includes("Transaction ID"))
           ? error.message
           : `Failed to place ${walletName} order. Please try again.`;
       return NextResponse.json({ error: msg }, { status: 500 });
@@ -237,43 +225,67 @@ export async function POST(req: NextRequest) {
     });
     orderId = created.order.id;
 
-    // Update order total with discount in database
+    // Update order total with discount and shipping in database
+    let orderFinalTotal = created.order.total;
     if (discountPercent > 0) {
-      const discountedTotal = Math.max(
+      orderFinalTotal = Math.max(
         0,
         Math.round(created.order.total * (1 - discountPercent / 100) * 100) / 100
       );
-      const supabase = createAdminClient();
-      await supabase
-        .from("orders")
-        .update({
-          total: discountedTotal,
-        })
-        .eq("id", orderId);
     }
+    orderFinalTotal += calculatedShippingFee;
+
+    const supabase = createAdminClient();
+    await supabase
+      .from("orders")
+      .update({
+        total: orderFinalTotal,
+      })
+      .eq("id", orderId);
 
     try {
+      // Note: Stripe does not support PKR currency. We convert PKR to USD at approx 1 USD = 278 PKR
+      const PKR_TO_USD_RATE = 278;
+
+      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = created.variants.map((variant) => {
+        const pkrUnitPrice = discountPercent > 0
+          ? Math.round(variant.price * (1 - discountPercent / 100))
+          : Math.round(variant.price);
+
+        // Convert to USD cents (1 USD = 100 cents)
+        const usdCents = Math.max(50, Math.round((pkrUnitPrice / PKR_TO_USD_RATE) * 100));
+
+        return {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `${variant.name} (Rs ${pkrUnitPrice.toLocaleString()} PKR)${
+                discountPercent > 0 ? ` [${discountPercent}% Off with ${couponCode}]` : ""
+              }`,
+            },
+            unit_amount: usdCents,
+          },
+          quantity: variant.qty,
+        };
+      });
+
+      if (calculatedShippingFee > 0) {
+        lineItems.push({
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `Standard Delivery (Rs ${calculatedShippingFee} PKR)`,
+            },
+            unit_amount: Math.max(50, Math.round((calculatedShippingFee / PKR_TO_USD_RATE) * 100)),
+          },
+          quantity: 1,
+        });
+      }
+
       const session = await stripe.checkout.sessions.create(
         {
           mode: "payment",
-          line_items: created.variants.map((variant) => {
-            const unitPrice = discountPercent > 0
-              ? Math.round(variant.price * (1 - discountPercent / 100) * 100)
-              : Math.round(variant.price * 100);
-
-            return {
-              price_data: {
-                currency: "pkr",
-                product_data: {
-                  name:
-                    variant.name +
-                    (discountPercent > 0 ? ` (${discountPercent}% Off with ${couponCode})` : ""),
-                },
-                unit_amount: Math.max(100, unitPrice),
-              },
-              quantity: variant.qty,
-            };
-          }),
+          line_items: lineItems,
           success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order=${orderId}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cart`,
           metadata: { order_id: orderId, coupon_code: couponCode || "" },

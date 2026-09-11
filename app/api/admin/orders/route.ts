@@ -68,14 +68,49 @@ export async function PATCH(req: NextRequest) {
     if (paymentStatus !== "paid" && paymentStatus !== "unpaid" && paymentStatus !== "failed") {
       return NextResponse.json({ error: "Invalid payment_status" }, { status: 400 });
     }
+
+    const { data: currentOrder } = await supabase
+      .from("orders")
+      .select("id, status, payment_status, payment_method")
+      .eq("id", orderId)
+      .single();
+
     const { error: payErr } = await supabase
       .from("orders")
-      .update({ payment_status: paymentStatus })
+      .update({
+        payment_status: paymentStatus,
+        ...(paymentStatus === "failed" ? { status: "cancelled" } : {}),
+      })
       .eq("id", orderId);
 
     if (payErr) {
       logServerError("Failed to update payment status", payErr, { orderId });
       return NextResponse.json({ error: "Failed to update payment status" }, { status: 500 });
+    }
+
+    // If payment failed/rejected, restore inventory for this order's items
+    if (paymentStatus === "failed" && currentOrder?.status !== "cancelled") {
+      const { data: orderItems } = await supabase
+        .from("order_items")
+        .select("variant_id, qty")
+        .eq("order_id", orderId);
+
+      if (orderItems && orderItems.length > 0) {
+        for (const item of orderItems) {
+          const { data: currentVar } = await supabase
+            .from("product_variants")
+            .select("stock_qty")
+            .eq("id", item.variant_id)
+            .single();
+
+          if (currentVar) {
+            await supabase
+              .from("product_variants")
+              .update({ stock_qty: currentVar.stock_qty + item.qty })
+              .eq("id", item.variant_id);
+          }
+        }
+      }
     }
 
     if (!status) {

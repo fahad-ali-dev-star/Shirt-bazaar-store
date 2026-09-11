@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCart } from "@/lib/store/cart";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { ShoppingBag, User, ShieldCheck, Home, Menu, X } from "lucide-react";
+import { ShoppingBag, User, ShieldCheck, Home, Menu, X, Heart } from "lucide-react";
+import { useWishlist } from "@/lib/store/wishlist";
 import { AISearchBar } from "./components/ai-search-bar";
 import { Logo } from "@/components/logo";
 import { usePathname } from "next/navigation";
@@ -40,6 +41,7 @@ function NavLink({
 
 export function NavBar() {
   const count = useCart((s) => s.count());
+  const wishlistCount = useWishlist((s) => s.count());
   const [mounted, setMounted] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -72,6 +74,7 @@ export function NavBar() {
 
   const isHome = pathname === "/";
   const isCart = pathname === "/cart";
+  const isWishlist = pathname === "/wishlist";
   const isAccount = pathname === "/account" || pathname === "/login";
 
   return (
@@ -103,10 +106,26 @@ export function NavBar() {
             <span>Home</span>
           </NavLink>
 
-          <NavLink href="/admin/login">
-            <ShieldCheck size={16} />
-            <span>Admin</span>
-          </NavLink>
+          {/* Wishlist */}
+          <Link
+            href="/wishlist"
+            className={`relative flex items-center gap-1.5 text-sm font-medium transition-colors group ${
+              isWishlist ? "text-rose-600" : "text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Heart size={18} className={isWishlist ? "fill-rose-500 text-rose-500" : ""} />
+            <span>Wishlist</span>
+            {mounted && wishlistCount > 0 && (
+              <span className="flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs animate-bounce-in">
+                {wishlistCount}
+              </span>
+            )}
+            <span
+              className={`absolute -bottom-1 left-0 h-px bg-rose-500 transition-all duration-300 ${
+                isWishlist ? "w-full" : "w-0 group-hover:w-full"
+              }`}
+            />
+          </Link>
 
           {/* Cart */}
           <Link
@@ -129,6 +148,11 @@ export function NavBar() {
             />
           </Link>
 
+          <NavLink href="/admin/login">
+            <ShieldCheck size={16} />
+            <span>Admin</span>
+          </NavLink>
+
           {/* Account / Sign in */}
           {mounted && (
             <Link
@@ -145,10 +169,24 @@ export function NavBar() {
           )}
         </div>
 
-        {/* Mobile: cart + hamburger */}
-        <div className="flex md:hidden items-center gap-3">
+        {/* Mobile: wishlist + cart + hamburger */}
+        <div className="flex md:hidden items-center gap-2.5">
+          <Link
+            href="/wishlist"
+            aria-label="Wishlist"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 transition-colors"
+          >
+            <Heart size={18} />
+            {mounted && wishlistCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs animate-bounce-in">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
+
           <Link
             href="/cart"
+            aria-label="Cart"
             className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-800 hover:bg-slate-200 transition-colors"
           >
             <ShoppingBag size={18} />

@@ -113,108 +113,112 @@ export async function createCodOrder({
   items,
   shippingAddress,
   userId,
+  discountPercent = 0,
+  couponCode = null,
+  shippingCost = 0,
 }: {
   items: CheckoutItem[];
   shippingAddress: ShippingAddress;
   userId: string;
+  discountPercent?: number;
+  couponCode?: string | null;
+  shippingCost?: number;
 }) {
   const supabase = createAdminClient();
 
-  // Try PostgreSQL RPC create_cod_order first
-  const { data, error } = await supabase.rpc("create_cod_order", {
-    p_user_id: userId,
-    p_shipping_address: shippingAddress,
-    p_items: items,
-  });
+  const variantIds = items.map((i) => i.variantId);
+  const { data: variants, error: varError } = await supabase
+    .from("product_variants")
+    .select("id, stock_qty, price_override, products(name, base_price, is_active)")
+    .in("id", variantIds);
 
-  let orderId: string;
-  let total: number;
+  if (varError || !variants || variants.length !== items.length) {
+    throw new Error("One or more products are unavailable");
+  }
 
-  if (!error && data) {
-    const result = data as {
-      order_id: string;
-      total: number;
-      variants: CheckoutVariant[];
-    };
-    orderId = result.order_id;
-    total = result.total;
-  } else {
-    // Graceful fallback if RPC is not yet applied
-    const variantIds = items.map((i) => i.variantId);
-    const { data: variants, error: varError } = await supabase
-      .from("product_variants")
-      .select("id, stock_qty, price_override, products(name, base_price, is_active)")
-      .in("id", variantIds);
-
-    if (varError || !variants || variants.length !== items.length) {
+  let calculatedTotal = 0;
+  for (const item of items) {
+    const v = variants.find((variant) => variant.id === item.variantId);
+    const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
+    if (!v || !product || !product.is_active) {
       throw new Error("One or more products are unavailable");
     }
-
-    let calculatedTotal = 0;
-    for (const item of items) {
-      const v = variants.find((variant) => variant.id === item.variantId);
-      const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
-      if (!v || !product || !product.is_active) {
-        throw new Error("One or more products are unavailable");
-      }
-      if (v.stock_qty < item.qty) {
-        throw new Error("One or more items are out of stock");
-      }
-      const price = v.price_override ?? product.base_price;
-      calculatedTotal += price * item.qty;
+    if (v.stock_qty < item.qty) {
+      throw new Error("One or more items are out of stock");
     }
+    const price = v.price_override ?? product.base_price;
+    calculatedTotal += price * item.qty;
+  }
 
-    const { data: orderData, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        user_id: userId,
-        status: "processing",
-        payment_status: "unpaid",
-        payment_method: "cod",
-        total: calculatedTotal,
-        shipping_address: shippingAddress,
-        payment_reference: `COD-${Date.now()}-${userId.slice(0, 8)}`,
-      })
-      .select("id, total")
-      .single();
+  let productDiscounted = calculatedTotal;
+  if (discountPercent > 0) {
+    productDiscounted = Math.max(
+      0,
+      Math.round(calculatedTotal * (1 - discountPercent / 100) * 100) / 100
+    );
+  }
 
-    if (orderError || !orderData) {
-      logServerError("Failed to create COD order", orderError, { userId });
-      throw new Error("Unable to create order");
+  const safeShipping = Math.max(0, Number(shippingCost) || 0);
+  const finalTotal = Math.round((productDiscounted + safeShipping) * 100) / 100;
+
+  let paymentRef = `COD-${Date.now()}-${userId.slice(0, 8)}`;
+  if (couponCode) {
+    paymentRef += ` [${couponCode}]`;
+  }
+  if (safeShipping > 0) {
+    paymentRef += ` | Ship: Rs ${safeShipping}`;
+  }
+
+  const { data: orderData, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      user_id: userId,
+      status: "processing",
+      payment_status: "unpaid",
+      payment_method: "cod",
+      total: finalTotal,
+      shipping_address: shippingAddress,
+      payment_reference: paymentRef,
+    })
+    .select("id, total")
+    .single();
+
+  if (orderError || !orderData) {
+    logServerError("Failed to create COD order", orderError, { userId });
+    throw new Error("Unable to create order");
+  }
+
+  const orderId = orderData.id;
+  const total = orderData.total;
+
+  const orderItems = items.map((item) => {
+    const v = variants.find((variant) => variant.id === item.variantId);
+    const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
+    const price = v?.price_override ?? product?.base_price ?? 0;
+    return {
+      order_id: orderId,
+      variant_id: item.variantId,
+      qty: item.qty,
+      price_at_purchase: price,
+    };
+  });
+
+  await supabase.from("order_items").insert(orderItems);
+
+  for (const item of items) {
+    const v = variants.find((variant) => variant.id === item.variantId);
+    if (v) {
+      await supabase
+        .from("product_variants")
+        .update({ stock_qty: Math.max(0, v.stock_qty - item.qty) })
+        .eq("id", item.variantId);
     }
+  }
 
-    orderId = orderData.id;
-    total = orderData.total;
-
-    const orderItems = items.map((item) => {
-      const v = variants.find((variant) => variant.id === item.variantId);
-      const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
-      const price = v?.price_override ?? product?.base_price ?? 0;
-      return {
-        order_id: orderId,
-        variant_id: item.variantId,
-        qty: item.qty,
-        price_at_purchase: price,
-      };
-    });
-
-    await supabase.from("order_items").insert(orderItems);
-
-    for (const item of items) {
-      const v = variants.find((variant) => variant.id === item.variantId);
-      if (v) {
-        await supabase
-          .from("product_variants")
-          .update({ stock_qty: Math.max(0, v.stock_qty - item.qty) })
-          .eq("id", item.variantId);
-      }
-    }
-
-    const { data: carts } = await supabase.from("carts").select("id").eq("user_id", userId);
-    if (carts && carts.length > 0) {
-      const cartIds = carts.map((c) => c.id);
-      await supabase.from("cart_items").delete().in("cart_id", cartIds);
-    }
+  const { data: carts } = await supabase.from("carts").select("id").eq("user_id", userId);
+  if (carts && carts.length > 0) {
+    const cartIds = carts.map((c) => c.id);
+    await supabase.from("cart_items").delete().in("cart_id", cartIds);
   }
 
   // Send confirmation email
@@ -243,6 +247,7 @@ export async function createManualWalletOrder({
   senderPhone,
   discountPercent = 0,
   couponCode = null,
+  shippingCost = 0,
 }: {
   items: CheckoutItem[];
   shippingAddress: ShippingAddress;
@@ -252,8 +257,31 @@ export async function createManualWalletOrder({
   senderPhone?: string | null;
   discountPercent?: number;
   couponCode?: string | null;
+  shippingCost?: number;
 }) {
   const supabase = createAdminClient();
+
+  const cleanTid = transactionId.trim().toUpperCase();
+  // TID format validation (must be 6-35 alphanumeric chars)
+  if (!/^[A-Z0-9_-]{6,35}$/.test(cleanTid)) {
+    throw new Error(
+      "Invalid Transaction ID format. Please enter the valid TID from your payment confirmation SMS."
+    );
+  }
+
+  // Duplicate TID check in existing orders
+  const { data: existingTidOrder } = await supabase
+    .from("orders")
+    .select("id, status, created_at")
+    .ilike("payment_reference", `%TID: ${cleanTid}%`)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingTidOrder) {
+    throw new Error(
+      `This Transaction ID (${cleanTid}) has already been submitted for another order. If this is an error, please contact customer support.`
+    );
+  }
 
   const variantIds = items.map((i) => i.variantId);
   const { data: variants, error: varError } = await supabase
@@ -279,18 +307,27 @@ export async function createManualWalletOrder({
     calculatedTotal += price * item.qty;
   }
 
-  let finalTotal = calculatedTotal;
+  let productDiscounted = calculatedTotal;
   if (discountPercent > 0) {
-    finalTotal = Math.max(0, Math.round(calculatedTotal * (1 - discountPercent / 100) * 100) / 100);
+    productDiscounted = Math.max(
+      0,
+      Math.round(calculatedTotal * (1 - discountPercent / 100) * 100) / 100
+    );
   }
 
+  const safeShipping = Math.max(0, Number(shippingCost) || 0);
+  const finalTotal = Math.round((productDiscounted + safeShipping) * 100) / 100;
+
   const walletName = paymentMethod === "jazzcash" ? "JazzCash" : "Easypaisa";
-  let paymentRef = `${walletName} | TID: ${transactionId}`;
+  let paymentRef = `${walletName} | TID: ${cleanTid}`;
   if (senderPhone) {
-    paymentRef += ` | Sender: ${senderPhone}`;
+    paymentRef += ` | Sender: ${senderPhone.trim()}`;
   }
   if (couponCode) {
     paymentRef += ` [${couponCode}]`;
+  }
+  if (safeShipping > 0) {
+    paymentRef += ` | Ship: Rs ${safeShipping}`;
   }
 
   const { data: orderData, error: orderError } = await supabase
@@ -350,7 +387,7 @@ export async function createManualWalletOrder({
     const toEmail = shippingAddress?.email;
     const customerName = shippingAddress?.fullName || shippingAddress?.name || "Customer";
     if (toEmail) {
-      await sendOrderConfirmationEmail(toEmail, customerName, orderId, finalTotal, paymentMethod, transactionId);
+      await sendOrderConfirmationEmail(toEmail, customerName, orderId, finalTotal, paymentMethod, cleanTid);
     }
   } catch (emailErr) {
     logServerError(`Failed to send ${walletName} order confirmation email`, emailErr, { orderId });
