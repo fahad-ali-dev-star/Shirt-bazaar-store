@@ -112,7 +112,11 @@ export default function NewProductPage() {
       const res = await fetch("/api/admin/generate-ai-details", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageUrl: images[0] }),
+        body: JSON.stringify({
+          imageUrl: images[0] || "",
+          currentName: name,
+          currentCategory: category,
+        }),
       });
 
       const data = await res.json();
