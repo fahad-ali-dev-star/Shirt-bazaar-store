@@ -123,16 +123,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">Support</p>
                 <ul className="space-y-3">
                   {[
-                    { label: "About Us", href: "#" },
-                    { label: "Shipping Policy", href: "#" },
-                    { label: "Return Policy", href: "#" },
-                    { label: "Privacy Policy", href: "#" },
-                    { label: "Terms of Service", href: "#" },
+                    { label: "About Us", href: "/policies/about" },
+                    { label: "Shipping Policy", href: "/policies/shipping" },
+                    { label: "Return Policy", href: "/policies/returns" },
+                    { label: "Privacy Policy", href: "/policies/privacy" },
+                    { label: "Terms of Service", href: "/policies/terms" },
                   ].map((l) => (
                     <li key={l.label}>
-                      <a href={l.href} className="text-sm text-slate-600 hover:text-brand-600 transition-colors">
+                      <Link href={l.href} className="text-sm text-slate-600 hover:text-brand-600 transition-colors">
                         {l.label}
-                      </a>
+                      </Link>
                     </li>
                   ))}
                 </ul>
