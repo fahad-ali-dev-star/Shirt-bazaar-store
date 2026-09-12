@@ -3,39 +3,30 @@ import { createAdminClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const DEFAULT_PROMO = {
-  is_active: true,
-  badge_text: "SUMMER DROP",
-  message: "Use code SAVE20 for 20% OFF your entire order!",
-  coupon_code: "SAVE20",
-  cta_text: "Shop Now",
-  cta_link: "/#products",
-  theme: "brand",
-  can_dismiss: true,
-};
-
 export async function GET() {
   try {
     const supabase = createAdminClient();
-    const fetchPromise = (supabase as any)
+    const { data, error } = await (supabase as any)
       .from("store_promos")
       .select("*")
-      .eq("is_active", true)
       .order("updated_at", { ascending: false })
       .limit(1)
-      .maybeSingle()
-      .then(({ data, error }: any) => {
-        if (error || !data) return DEFAULT_PROMO;
-        return data;
-      });
+      .maybeSingle();
 
-    const timeoutPromise = new Promise((resolve) =>
-      setTimeout(() => resolve(DEFAULT_PROMO), 1500)
-    );
+    if (error) {
+      console.warn("Could not query store_promos:", error.message);
+      return NextResponse.json({ promo: null });
+    }
 
-    const promo = await Promise.race([fetchPromise, timeoutPromise]);
-    return NextResponse.json({ promo });
-  } catch {
-    return NextResponse.json({ promo: DEFAULT_PROMO });
+    // If no row exists or if admin explicitly marked promo as inactive, return null
+    if (!data || data.is_active === false) {
+      return NextResponse.json({ promo: null });
+    }
+
+    return NextResponse.json({ promo: data });
+  } catch (err) {
+    console.warn("Exception in public promos endpoint:", err);
+    return NextResponse.json({ promo: null });
   }
 }
+

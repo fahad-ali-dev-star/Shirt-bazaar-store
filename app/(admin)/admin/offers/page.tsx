@@ -20,6 +20,13 @@ import {
   Truck,
   X,
   Zap,
+  DollarSign,
+  TrendingUp,
+  ShoppingBag,
+  Clock,
+  ShieldCheck,
+  BarChart3,
+  Award,
 } from "lucide-react";
 
 interface PromoConfig {
@@ -32,6 +39,31 @@ interface PromoConfig {
   cta_link: string;
   theme: "dark" | "brand" | "emerald" | "amber" | "purple" | "crimson";
   can_dismiss: boolean;
+}
+
+interface PromoAnalytics {
+  totalStoreOrders: number;
+  totalPromoOrders: number;
+  totalPromoRevenue: number;
+  totalDiscountGiven: number;
+  promoUsageRate: number;
+  codeBreakdown: Array<{
+    code: string;
+    count: number;
+    revenue: number;
+    discount: number;
+  }>;
+  recentPromoOrders: Array<{
+    id: string;
+    code: string;
+    customerName: string;
+    city: string;
+    total: number;
+    estimatedSavings: number;
+    status: string;
+    createdAt: string;
+    paymentMethod: string;
+  }>;
 }
 
 const CAMPAIGN_PRESETS = [
@@ -47,9 +79,9 @@ const CAMPAIGN_PRESETS = [
   },
   {
     icon: <Truck className="h-4 w-4 text-emerald-500" />,
-    name: "Free Shipping Threshold",
+    name: "Free Express Shipping",
     badge: "FREE SHIPPING 🚚",
-    message: "Free express shipping on all orders over $50!",
+    message: "Enjoy free express shipping on all orders over Rs 3,000!",
     code: "FREESHIP",
     cta_text: "Explore Catalog",
     cta_link: "/#products",
@@ -67,12 +99,12 @@ const CAMPAIGN_PRESETS = [
   },
   {
     icon: <Sparkles className="h-4 w-4 text-rose-500" />,
-    name: "Limited Edition Drop",
+    name: "Summer 2026 Drop 25%",
     badge: "EXCLUSIVE DROP 🔥",
-    message: "Spring / Summer 2026 limited drop now live!",
+    message: "Summer 2026 limited drop now live! 25% off today only.",
     code: "SUMMERDROP",
     cta_text: "View Collection",
-    cta_link: "/category/oversized",
+    cta_link: "/#products",
     theme: "crimson" as const,
   },
 ];
@@ -119,9 +151,11 @@ const THEME_OPTIONS = [
 export default function AdminOffersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedTest, setCopiedTest] = useState(false);
+  const [analytics, setAnalytics] = useState<PromoAnalytics | null>(null);
 
   const [form, setForm] = useState<PromoConfig>({
     is_active: true,
@@ -134,34 +168,73 @@ export default function AdminOffersPage() {
     can_dismiss: true,
   });
 
-  useEffect(() => {
-    async function loadPromo() {
-      try {
-        const res = await fetch("/api/admin/promos");
-        if (res.ok) {
-          const json = await res.json();
-          if (json.promo) {
-            setForm({
-              id: json.promo.id,
-              is_active: json.promo.is_active ?? true,
-              badge_text: json.promo.badge_text || "",
-              message: json.promo.message || "",
-              coupon_code: json.promo.coupon_code || "",
-              cta_text: json.promo.cta_text || "",
-              cta_link: json.promo.cta_link || "/#products",
-              theme: json.promo.theme || "dark",
-              can_dismiss: json.promo.can_dismiss ?? true,
-            });
-          }
+  async function loadData() {
+    try {
+      const res = await fetch("/api/admin/promos");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.promo) {
+          setForm({
+            id: json.promo.id,
+            is_active: json.promo.is_active ?? true,
+            badge_text: json.promo.badge_text || "",
+            message: json.promo.message || "",
+            coupon_code: json.promo.coupon_code || "",
+            cta_text: json.promo.cta_text || "",
+            cta_link: json.promo.cta_link || "/#products",
+            theme: json.promo.theme || "dark",
+            can_dismiss: json.promo.can_dismiss ?? true,
+          });
         }
-      } catch (err) {
-        console.error("Failed to load promo:", err);
-      } finally {
-        setLoading(false);
+        if (json.analytics) {
+          setAnalytics(json.analytics);
+        }
       }
+    } catch (err) {
+      console.error("Failed to load promo & analytics:", err);
+    } finally {
+      setLoading(false);
     }
-    loadPromo();
+  }
+
+  useEffect(() => {
+    loadData();
   }, []);
+
+  async function handleQuickToggle(newActiveState: boolean) {
+    setToggling(true);
+    setError(null);
+    setForm((prev) => ({ ...prev, is_active: newActiveState }));
+
+    try {
+      const res = await fetch("/api/admin/promos", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          is_active: newActiveState,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to update status");
+      }
+
+      const json = await res.json();
+      if (json.promo?.id) {
+        setForm((prev) => ({ ...prev, id: json.promo.id, is_active: json.promo.is_active }));
+      }
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error updating status");
+      // Revert state on error
+      setForm((prev) => ({ ...prev, is_active: !newActiveState }));
+    } finally {
+      setToggling(false);
+    }
+  }
 
   async function handleSave(e?: React.FormEvent) {
     if (e) e.preventDefault();
@@ -187,6 +260,7 @@ export default function AdminOffersPage() {
       }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
+      loadData();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error saving promo banner");
     } finally {
@@ -218,7 +292,10 @@ export default function AdminOffersPage() {
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+        <div className="text-center space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-600 border-t-transparent mx-auto" />
+          <p className="text-xs text-slate-500 font-medium">Loading offers & analytics...</p>
+        </div>
       </div>
     );
   }
@@ -227,27 +304,38 @@ export default function AdminOffersPage() {
     THEME_OPTIONS.find((t) => t.id === form.theme) || THEME_OPTIONS[0];
 
   return (
-    <div className="mx-auto max-w-7xl px-3.5 sm:px-6 py-4 sm:py-8">
-      {/* Top Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-7xl px-3.5 sm:px-6 py-4 sm:py-8 space-y-8 animate-fade-in">
+      {/* ── Top Header ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl flex items-center gap-2">
               <Megaphone className="h-6 w-6 sm:h-7 sm:w-7 text-brand-600 shrink-0" />
-              <span>Offers & Announcement Bar</span>
+              <span>Offers & Promotions Hub</span>
             </h1>
-            <span
-              className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold border transition-colors ${
+            <button
+              type="button"
+              onClick={() => handleQuickToggle(!form.is_active)}
+              disabled={toggling}
+              className={`rounded-full px-3 py-1 text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
                 form.is_active
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-slate-100 text-slate-500 border-slate-200"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                  : "bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200"
               }`}
+              title="Click to toggle status"
             >
-              {form.is_active ? "● Live on Storefront" : "○ Inactive / Hidden"}
-            </span>
+              {toggling ? (
+                <RefreshCw size={11} className="animate-spin" />
+              ) : form.is_active ? (
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              ) : (
+                <span className="h-2 w-2 rounded-full bg-slate-400" />
+              )}
+              <span>{form.is_active ? "● Live on Storefront" : "○ Inactive / Off"}</span>
+            </button>
           </div>
           <p className="mt-1.5 text-xs sm:text-sm text-slate-500">
-            Control the top announcement ribbon seen across your entire store. Announce flash sales, discount codes, and free shipping.
+            Configure store announcements, publish flash discount codes, and analyze promotional campaign performance.
           </p>
         </div>
 
@@ -259,7 +347,7 @@ export default function AdminOffersPage() {
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
           >
             <Eye className="h-4 w-4 text-slate-500" />
-            <span>View Live Storefront</span>
+            <span>View Storefront</span>
             <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
           </Link>
 
@@ -267,7 +355,7 @@ export default function AdminOffersPage() {
             type="button"
             onClick={() => handleSave()}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition shadow-sm"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition shadow-sm cursor-pointer"
           >
             {saving ? (
               <>
@@ -277,7 +365,7 @@ export default function AdminOffersPage() {
             ) : saveSuccess ? (
               <>
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                <span>Published Live!</span>
+                <span>Saved & Live!</span>
               </>
             ) : (
               <span>Publish Changes</span>
@@ -287,29 +375,219 @@ export default function AdminOffersPage() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {saveSuccess && (
-        <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800 animate-slide-down">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          <span>Promotional announcement updated and live on your storefront!</span>
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800 animate-slide-down">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>Offers and promotional announcement settings have been updated successfully!</span>
         </div>
       )}
 
-      {/* Real-time Interactive Live Preview Banner */}
-      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+      {/* ── SECTION 1: OFFERS & PROMOS ANALYSIS & KPI CARDS ── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-brand-600" />
+            <h2 className="text-base font-bold text-slate-900">Offers & Promo Analytics</h2>
+          </div>
+          <span className="text-xs text-slate-400 font-medium">Real-time coupon redemption metrics</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Active Status */}
+          <div className="card p-5 bg-gradient-to-br from-white to-slate-50/60 border-slate-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Offer Status
+              </span>
+              <span
+                className={`flex h-8 w-8 items-center justify-center rounded-xl ${
+                  form.is_active ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                <Zap size={16} />
+              </span>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <p className={`text-xl sm:text-2xl font-extrabold ${form.is_active ? "text-emerald-700" : "text-slate-600"}`}>
+                {form.is_active ? "Active & Live" : "Inactive / Off"}
+              </p>
+              <button
+                type="button"
+                onClick={() => handleQuickToggle(!form.is_active)}
+                disabled={toggling}
+                className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors ${
+                  form.is_active
+                    ? "bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-red-700 border-slate-200"
+                    : "bg-emerald-600 hover:bg-emerald-700 text-white border-transparent"
+                }`}
+              >
+                {toggling ? "Saving..." : form.is_active ? "Turn Off" : "Turn On"}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              {form.is_active
+                ? `Current active code: ${form.coupon_code || "None"}`
+                : "Banner ribbon is hidden from storefront shoppers"}
+            </p>
+          </div>
+
+          {/* Card 2: Promo Revenue */}
+          <div className="card p-5 bg-gradient-to-br from-white to-slate-50/60 border-slate-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Promo Sales Volume
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <DollarSign size={16} />
+              </span>
+            </div>
+            <p className="mt-3 text-xl sm:text-2xl font-extrabold text-slate-950">
+              Rs {(analytics?.totalPromoRevenue || 0).toLocaleString()}
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              From <strong className="text-slate-700">{analytics?.totalPromoOrders || 0}</strong> coupon-assisted checkout{analytics?.totalPromoOrders !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          {/* Card 3: Discounts Given */}
+          <div className="card p-5 bg-gradient-to-br from-white to-slate-50/60 border-slate-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Discounts Distributed
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <Tag size={16} />
+              </span>
+            </div>
+            <p className="mt-3 text-xl sm:text-2xl font-extrabold text-amber-700">
+              Rs {(analytics?.totalDiscountGiven || 0).toLocaleString()}
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Total price reduction saved by customers
+            </p>
+          </div>
+
+          {/* Card 4: Redemptions & Usage */}
+          <div className="card p-5 bg-gradient-to-br from-white to-slate-50/60 border-slate-200">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Promo Usage Rate
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                <TrendingUp size={16} />
+              </span>
+            </div>
+            <p className="mt-3 text-xl sm:text-2xl font-extrabold text-slate-950">
+              {analytics?.promoUsageRate || 0}%
+            </p>
+            <p className="mt-2 text-xs text-slate-500">
+              Of all <strong className="text-slate-700">{analytics?.totalStoreOrders || 0}</strong> store orders used a coupon
+            </p>
+          </div>
+        </div>
+
+        {/* ── Coupon Performance Breakdown & Recent Redemptions ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2">
+          {/* Top Promo Codes Breakdown */}
+          <div className="card p-5">
+            <h3 className="text-sm font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <Award size={16} className="text-brand-600" />
+              <span>Coupon Campaign Leaderboard</span>
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">Performance breakdown by coupon code</p>
+
+            {!analytics?.codeBreakdown || analytics.codeBreakdown.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <Tag className="mx-auto mb-1 text-slate-300" size={20} />
+                No coupon redemptions recorded yet. As customers apply promo codes, breakdown will appear here.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {analytics.codeBreakdown.map((item, idx) => (
+                  <div key={item.code} className="py-3 flex items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 shrink-0">
+                        {idx + 1}
+                      </span>
+                      <div>
+                        <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          {item.code}
+                        </span>
+                        <span className="text-slate-500 ml-2">
+                          {item.count} order{item.count !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-slate-900">Rs {item.revenue.toLocaleString()}</p>
+                      <p className="text-[11px] text-emerald-600">Saved Rs {item.discount.toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Recent Promo Orders */}
+          <div className="card p-5">
+            <h3 className="text-sm font-bold text-slate-900 mb-1 flex items-center gap-2">
+              <ShoppingBag size={16} className="text-indigo-600" />
+              <span>Recent Discounted Orders</span>
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">Latest checkouts with coupon codes</p>
+
+            {!analytics?.recentPromoOrders || analytics.recentPromoOrders.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <Clock className="mx-auto mb-1 text-slate-300" size={20} />
+                No discounted orders in feed.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto pr-1">
+                {analytics.recentPromoOrders.map((ord) => (
+                  <div key={ord.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-semibold text-slate-900">
+                          #{ord.id.slice(0, 8).toUpperCase()}
+                        </span>
+                        <span className="font-mono text-[10px] font-bold bg-amber-50 text-amber-800 px-1.5 py-0.2 rounded border border-amber-200">
+                          {ord.code}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                        {ord.customerName} {ord.city ? `(${ord.city})` : ""} · {new Date(ord.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-slate-900">Rs {ord.total.toLocaleString()}</p>
+                      <span className="capitalize text-[10px] font-semibold text-slate-500">{ord.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── SECTION 2: LIVE STOREFRONT PREVIEW ── */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className={`flex h-2.5 w-2.5 rounded-full ${form.is_active ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
               Live Storefront Preview (What Customers See)
             </h3>
           </div>
-          <span className="text-xs font-medium text-slate-400">
-            {form.is_active ? "Showing on all pages" : "Currently hidden from customers"}
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
+            form.is_active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+          }`}>
+            {form.is_active ? "Currently Visible on All Pages" : "Currently Hidden (OFF)"}
           </span>
         </div>
 
@@ -322,7 +600,7 @@ export default function AdminOffersPage() {
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
             </div>
             <div className="mx-auto text-[11px] font-mono text-slate-500 bg-white px-3 py-0.5 rounded-md border border-slate-200">
-              shirtstore.com
+              shirtbazaar.pk
             </div>
           </div>
 
@@ -345,7 +623,7 @@ export default function AdminOffersPage() {
                   <button
                     type="button"
                     onClick={handleTestCopy}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-mono font-bold tracking-wider bg-white/15 hover:bg-white/25 border border-white/25 text-white transition active:scale-95 shadow-xs"
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-mono font-bold tracking-wider bg-white/15 hover:bg-white/25 border border-white/25 text-white transition active:scale-95 shadow-xs cursor-pointer"
                     title="Test copy code"
                   >
                     <Tag size={10} />
@@ -375,8 +653,17 @@ export default function AdminOffersPage() {
               )}
             </div>
           ) : (
-            <div className="py-4 text-center text-xs text-slate-400 bg-slate-100 italic">
-              Banner is currently toggled OFF (Inactive). Toggle ON below to make it visible.
+            <div className="py-6 text-center text-xs text-slate-500 bg-slate-100/80 flex flex-col items-center justify-center gap-2">
+              <span className="font-semibold text-slate-700">Banner is currently OFF (Inactive)</span>
+              <p className="text-[11px] text-slate-400 max-w-sm">Shoppers will not see any promotional announcement ribbon on the storefront.</p>
+              <button
+                type="button"
+                onClick={() => handleQuickToggle(true)}
+                className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 transition cursor-pointer"
+              >
+                <Zap size={12} />
+                <span>Turn Banner ON</span>
+              </button>
             </div>
           )}
 
@@ -392,6 +679,7 @@ export default function AdminOffersPage() {
         </div>
       </div>
 
+      {/* ── SECTION 3: FORM CONFIGURATION ── */}
       <form onSubmit={(e) => handleSave(e)} className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         {/* Left Column: Form Controls (8 cols) */}
         <div className="space-y-6 lg:col-span-8">
@@ -410,7 +698,7 @@ export default function AdminOffersPage() {
               <button
                 type="button"
                 onClick={() => setForm((p) => ({ ...p, is_active: !p.is_active }))}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition cursor-pointer ${
                   form.is_active
                     ? "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700"
                     : "bg-slate-200 text-slate-700 hover:bg-slate-300"
@@ -441,7 +729,7 @@ export default function AdminOffersPage() {
                     key={p.name}
                     type="button"
                     onClick={() => applyPreset(p)}
-                    className="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-left hover:border-brand-500 hover:bg-brand-50/30 transition group"
+                    className="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-left hover:border-brand-500 hover:bg-brand-50/30 transition group cursor-pointer"
                   >
                     <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-white transition shrink-0">
                       {p.icon}
@@ -529,7 +817,7 @@ export default function AdminOffersPage() {
                     type="text"
                     value={form.cta_link}
                     onChange={(e) => setForm((p) => ({ ...p, cta_link: e.target.value }))}
-                    placeholder="/#products or /category/oversized"
+                    placeholder="/#products"
                     className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-black focus:outline-none"
                   />
                 </div>
@@ -550,7 +838,7 @@ export default function AdminOffersPage() {
                   key={theme.id}
                   type="button"
                   onClick={() => setForm((p) => ({ ...p, theme: theme.id as any }))}
-                  className={`rounded-xl border-2 p-3 text-left transition flex items-center gap-3 ${
+                  className={`rounded-xl border-2 p-3 text-left transition flex items-center gap-3 cursor-pointer ${
                     form.theme === theme.id
                       ? "border-black bg-slate-50 ring-2 ring-black/10"
                       : "border-slate-200 hover:border-slate-300"
@@ -584,7 +872,7 @@ export default function AdminOffersPage() {
         <div className="space-y-6 lg:col-span-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <span>💡 Best Practices for Offers</span>
+              <span>💡 Offers Best Practices</span>
             </h3>
 
             <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
@@ -594,13 +882,13 @@ export default function AdminOffersPage() {
               </div>
 
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200/60 text-emerald-900">
-                <p className="font-semibold mb-0.5">🏷️ Coupon Codes</p>
-                <p className="text-[11px]">When coupon codes are present, a <strong>Copy</strong> button appears automatically to reduce checkout friction.</p>
+                <p className="font-semibold mb-0.5">🏷️ Auto-Apply Codes</p>
+                <p className="text-[11px]">When coupon codes are present, a <strong>Copy</strong> button appears automatically and auto-applies discount in cart.</p>
               </div>
 
               <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-200/60 text-indigo-900">
-                <p className="font-semibold mb-0.5">🚀 Instant Updates</p>
-                <p className="text-[11px]">Clicking <strong>Publish Changes</strong> immediately updates the live storefront without rebuilding or restarting the app.</p>
+                <p className="font-semibold mb-0.5">🚀 Instant Active/Inactive</p>
+                <p className="text-[11px]">Toggling the status switch immediately updates the live storefront without rebuilding or restarting.</p>
               </div>
             </div>
 
@@ -609,7 +897,7 @@ export default function AdminOffersPage() {
                 type="button"
                 onClick={() => handleSave()}
                 disabled={saving}
-                className="w-full rounded-xl bg-black py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-50 transition shadow-sm flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-50 transition shadow-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 {saving ? (
                   <>
@@ -630,3 +918,4 @@ export default function AdminOffersPage() {
     </div>
   );
 }
+
