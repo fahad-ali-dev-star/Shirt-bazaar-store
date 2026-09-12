@@ -78,26 +78,37 @@ export const getCachedHomeProducts = unstable_cache(
   async (): Promise<HomeProductItem[]> => {
     return withTimeout(
       async () => {
-        const supabase = createPublicClient();
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, name, slug, base_price, product_images(url, position)")
-          .eq("is_active", true)
-          .order("created_at", { ascending: false })
-          .limit(24);
+        try {
+          const supabase = createPublicClient();
+          const { data, error } = await supabase
+            .from("products")
+            .select("id, name, slug, category, base_price, product_images(url, position)")
+            .eq("is_active", true)
+            .order("created_at", { ascending: false })
+            .limit(48);
 
-        if (error || !data || data.length === 0) {
+          if (error) {
+            console.warn("Supabase query error in getCachedHomeProducts:", error.message);
+            return FALLBACK_PRODUCTS;
+          }
+
+          if (data && data.length > 0) {
+            return data as any;
+          }
+
+          return FALLBACK_PRODUCTS;
+        } catch (err) {
+          console.warn("Exception in getCachedHomeProducts:", err);
           return FALLBACK_PRODUCTS;
         }
-        return data as any;
       },
-      2500,
+      8000,
       FALLBACK_PRODUCTS
     );
   },
   ["home-products-list"],
   {
-    revalidate: 60,
+    revalidate: 30,
     tags: ["products", "home-products"],
   }
 );
@@ -106,28 +117,33 @@ export const getCachedBanner = unstable_cache(
   async () => {
     return withTimeout(
       async () => {
-        const supabase = createPublicClient();
-        const { data, error } = await supabase
-          .from("store_banners")
-          .select("*")
-          .eq("is_active", true)
-          .order("updated_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        try {
+          const supabase = createPublicClient();
+          const { data, error } = await supabase
+            .from("store_banners")
+            .select("*")
+            .eq("is_active", true)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        if (error) return null;
-        return data || null;
+          if (error) return null;
+          return data || null;
+        } catch {
+          return null;
+        }
       },
-      2500,
+      8000,
       null
     );
   },
   ["home-store-banner"],
   {
-    revalidate: 60,
+    revalidate: 30,
     tags: ["banners", "home-banner"],
   }
 );
+
 
 export interface ProductDetailItem {
   id: string;
@@ -209,7 +225,7 @@ export async function getCachedProductBySlug(slug: string): Promise<ProductDetai
       }
       return data as any;
     },
-    2500,
+    8000,
     FALLBACK_PRODUCT_DETAILS[slug] || null
   );
 }
@@ -236,7 +252,7 @@ export async function getCachedCategoryProducts(slug: string): Promise<HomeProdu
       }
       return (data as any) || [];
     },
-    2500,
+    8000,
     FALLBACK_PRODUCTS.filter(
       (p) =>
         p.slug.includes(slug) ||
@@ -271,9 +287,10 @@ export async function searchProducts(q: string): Promise<HomeProductItem[]> {
       }
       return data as any;
     },
-    3000,
+    8000,
     FALLBACK_PRODUCTS.filter((p) => p.name.toLowerCase().includes(cleanQ.toLowerCase()))
   );
 }
+
 
 
