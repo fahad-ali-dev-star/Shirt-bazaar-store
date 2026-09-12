@@ -141,8 +141,7 @@ export async function POST(req: NextRequest) {
         shippingCost: calculatedShippingFee,
       });
 
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-      const redirectUrl = `${siteUrl}/checkout/success?order=${created.order.id}&method=cod`;
+      const redirectUrl = `/checkout/success?order=${created.order.id}&method=cod`;
 
       return NextResponse.json({
         success: true,
@@ -184,8 +183,7 @@ export async function POST(req: NextRequest) {
         shippingCost: calculatedShippingFee,
       });
 
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-      const redirectUrl = `${siteUrl}/checkout/success?order=${created.order.id}&method=${paymentMethod}&tid=${encodeURIComponent(
+      const redirectUrl = `/checkout/success?order=${created.order.id}&method=${paymentMethod}&tid=${encodeURIComponent(
         walletCheck.transactionId
       )}`;
 
@@ -194,6 +192,7 @@ export async function POST(req: NextRequest) {
         orderId: created.order.id,
         url: redirectUrl,
       });
+
     } catch (error) {
       const walletName = paymentMethod === "jazzcash" ? "JazzCash" : "Easypaisa";
       logServerError(`${walletName} Checkout failed`, error, { userId: user.id });

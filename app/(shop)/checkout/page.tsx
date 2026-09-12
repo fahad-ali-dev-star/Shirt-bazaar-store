@@ -125,7 +125,22 @@ function CheckoutForm() {
       }
 
       if (data.url) {
-        window.location.href = data.url;
+        if (data.url.startsWith("http://") || data.url.startsWith("https://")) {
+          try {
+            const urlObj = new URL(data.url);
+            if (typeof window !== "undefined" && (urlObj.origin === window.location.origin || data.url.includes("/checkout/success"))) {
+              router.push(`${urlObj.pathname}${urlObj.search}`);
+            } else {
+              window.location.href = data.url;
+            }
+          } catch {
+            window.location.href = data.url;
+          }
+        } else {
+          router.push(data.url);
+        }
+      } else if (data.orderId) {
+        router.push(`/checkout/success?order=${data.orderId}&method=${paymentMethod}`);
       } else {
         setError("Order created, but could not navigate to confirmation.");
         setLoading(false);
@@ -135,6 +150,7 @@ function CheckoutForm() {
       setLoading(false);
     }
   }
+
 
   const inputCls = "input-base mt-1.5";
   const labelCls = "block text-xs font-semibold uppercase tracking-wider text-slate-500";
