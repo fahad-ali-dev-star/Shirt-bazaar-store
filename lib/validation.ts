@@ -11,15 +11,24 @@ export const MAX_CATEGORY = 80;
 export const MAX_VARIANTS = 100;
 export const MAX_IMAGES = 20;
 export const MAX_IMAGE_URL = 2048;
-export const MAX_ADDRESS_FIELD = 160;
+export const MAX_ADDRESS_FIELD = 250;
+export const MAX_DELIVERY_NOTES = 500;
 
 export type CheckoutItemInput = { variantId: string; qty: number };
 export type ShippingAddressInput = {
   fullName: string;
   email: string;
   phone: string;
+  alternatePhone?: string | null;
   address: string;
+  houseNumber?: string | null;
+  streetAddress?: string | null;
+  landmark?: string | null;
   city: string;
+  province?: string | null;
+  postalCode?: string | null;
+  addressType?: "home" | "office" | "other" | null;
+  deliveryNotes?: string | null;
 };
 
 export type ProductVariantInput = {
@@ -89,17 +98,63 @@ export function validateShippingAddress(value: unknown): { ok: true; value: Ship
     return { ok: false, error: "Invalid shipping address" };
   }
   const input = value as Record<string, unknown>;
-  const fields = ["fullName", "email", "phone", "address", "city"] as const;
-  for (const field of fields) {
+  const requiredFields = ["fullName", "email", "phone", "address", "city"] as const;
+  const allowedFields = [
+    "fullName",
+    "email",
+    "phone",
+    "alternatePhone",
+    "address",
+    "houseNumber",
+    "streetAddress",
+    "landmark",
+    "city",
+    "province",
+    "postalCode",
+    "addressType",
+    "deliveryNotes",
+  ] as const;
+
+  for (const field of requiredFields) {
     if (!isSafeText(input[field], MAX_ADDRESS_FIELD)) {
-      return { ok: false, error: `Invalid ${field}` };
+      return { ok: false, error: `Please provide a valid ${field === "fullName" ? "full name" : field === "phone" ? "phone number" : field === "address" ? "delivery address" : field}.` };
     }
   }
-  if (!isEmail(input.email)) return { ok: false, error: "Invalid email address" };
+
+  if (!isEmail(input.email)) return { ok: false, error: "Please enter a valid email address." };
   if (!/^[+0-9()\-\s]{7,30}$/.test(input.phone as string)) {
-    return { ok: false, error: "Invalid phone number" };
+    return { ok: false, error: "Please enter a valid phone number (e.g. 0300-1234567)." };
   }
-  const extraKeys = Object.keys(input).filter((key) => !fields.includes(key as (typeof fields)[number]));
+
+  if (input.alternatePhone && typeof input.alternatePhone === "string" && input.alternatePhone.trim().length > 0) {
+    if (!/^[+0-9()\-\s]{7,30}$/.test(input.alternatePhone.trim())) {
+      return { ok: false, error: "Please enter a valid alternative phone number or leave it blank." };
+    }
+  }
+
+  if (input.landmark && typeof input.landmark === "string" && input.landmark.trim().length > MAX_ADDRESS_FIELD) {
+    return { ok: false, error: "Landmark description is too long." };
+  }
+
+  if (input.province && typeof input.province === "string" && input.province.trim().length > 100) {
+    return { ok: false, error: "Province name is too long." };
+  }
+
+  if (input.postalCode && typeof input.postalCode === "string" && input.postalCode.trim().length > 20) {
+    return { ok: false, error: "Postal code is too long." };
+  }
+
+  if (input.deliveryNotes && typeof input.deliveryNotes === "string" && input.deliveryNotes.trim().length > MAX_DELIVERY_NOTES) {
+    return { ok: false, error: "Delivery instructions are too long (maximum 500 characters)." };
+  }
+
+  if (input.addressType && typeof input.addressType === "string") {
+    if (!["home", "office", "other"].includes(input.addressType)) {
+      return { ok: false, error: "Invalid address type selection." };
+    }
+  }
+
+  const extraKeys = Object.keys(input).filter((key) => !allowedFields.includes(key as (typeof allowedFields)[number]));
   if (extraKeys.length) return { ok: false, error: "Invalid shipping address fields" };
 
   return {
@@ -108,8 +163,16 @@ export function validateShippingAddress(value: unknown): { ok: true; value: Ship
       fullName: (input.fullName as string).trim(),
       email: (input.email as string).trim().toLowerCase(),
       phone: (input.phone as string).trim(),
+      alternatePhone: typeof input.alternatePhone === "string" && input.alternatePhone.trim() ? input.alternatePhone.trim() : null,
       address: (input.address as string).trim(),
+      houseNumber: typeof input.houseNumber === "string" && input.houseNumber.trim() ? input.houseNumber.trim() : null,
+      streetAddress: typeof input.streetAddress === "string" && input.streetAddress.trim() ? input.streetAddress.trim() : null,
+      landmark: typeof input.landmark === "string" && input.landmark.trim() ? input.landmark.trim() : null,
       city: (input.city as string).trim(),
+      province: typeof input.province === "string" && input.province.trim() ? input.province.trim() : null,
+      postalCode: typeof input.postalCode === "string" && input.postalCode.trim() ? input.postalCode.trim() : null,
+      addressType: (input.addressType as "home" | "office" | "other" | null) || null,
+      deliveryNotes: typeof input.deliveryNotes === "string" && input.deliveryNotes.trim() ? input.deliveryNotes.trim() : null,
     },
   };
 }

@@ -2,7 +2,22 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/api/errors";
 
 type CheckoutItem = { variantId: string; qty: number };
-type ShippingAddress = Record<string, string>;
+type ShippingAddress = {
+  fullName: string;
+  email: string;
+  phone: string;
+  alternatePhone?: string | null;
+  address: string;
+  houseNumber?: string | null;
+  streetAddress?: string | null;
+  landmark?: string | null;
+  city: string;
+  province?: string | null;
+  postalCode?: string | null;
+  addressType?: "home" | "office" | "other" | null;
+  deliveryNotes?: string | null;
+  [key: string]: string | null | undefined;
+};
 
 type CheckoutVariant = {
   id: string;
