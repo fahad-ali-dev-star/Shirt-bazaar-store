@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -42,17 +42,25 @@ function slugify(s: string) {
 
 export default function NewProductPage() {
   const router = useRouter();
+
+  useEffect(() => {
+    // Prefetch products list page for instant zero-lag transition
+    router.prefetch("/admin/products");
+  }, [router]);
+
   const [name, setName] = useState("");
   const [customSlug, setCustomSlug] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [category, setCategory] = useState("");
   const [isActive, setIsActive] = useState(true);
+
   const [variants, setVariants] = useState<VariantDraft[]>([
     { size: "M", color: "Black", sku: "", stock_qty: 10, price_override: null },
   ]);
   const [images, setImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [generatingAi, setGeneratingAi] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -63,13 +71,14 @@ export default function NewProductPage() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const fileList = Array.from(files);
     setUploading(true);
     setError(null);
+    setUploadProgress(`Uploading ${fileList.length} image${fileList.length === 1 ? "" : "s"}...`);
 
     try {
-      const urls: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      // Upload all selected files concurrently in parallel
+      const uploadPromises = fileList.map(async (file) => {
         const formData = new FormData();
         formData.append("file", file);
 
@@ -79,22 +88,25 @@ export default function NewProductPage() {
         });
 
         if (!res.ok) {
-          const data = await res.json();
-          throw new Error(data.error ?? "Failed to upload image");
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error ?? `Failed to upload ${file.name}`);
         }
 
         const data = await res.json();
-        urls.push(data.url);
-      }
+        return data.url as string;
+      });
 
-      setImages((prev) => [...prev, ...urls]);
+      const uploadedUrls = await Promise.all(uploadPromises);
+      setImages((prev) => [...prev, ...uploadedUrls]);
     } catch (err: unknown) {
       setError((err instanceof Error ? err.message : null) || "Error uploading image");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
       e.target.value = "";
     }
   }
+
 
   function removeImage(index: number) {
     setImages((prev) => prev.filter((_, idx) => idx !== index));
@@ -176,9 +188,9 @@ export default function NewProductPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
+          name: name.trim(),
           slug: activeSlug,
-          description,
+          description: description.trim(),
           base_price: Number(basePrice),
           category: category.trim() || null,
           is_active: isActive,
@@ -188,18 +200,19 @@ export default function NewProductPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         setError(data.error ?? "Failed to create product");
         setSaving(false);
         return;
       }
 
-      router.push("/admin/products");
+      router.replace("/admin/products");
     } catch {
       setError("Could not reach the server. Please try again.");
       setSaving(false);
     }
   }
+
 
   const totalStockUnits = variants.reduce((sum, v) => sum + (Number(v.stock_qty) || 0), 0);
 

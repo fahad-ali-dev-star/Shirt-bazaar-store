@@ -54,44 +54,53 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
 
+    const insertTasks = [];
+
     if (variants?.length) {
-      const { error: variantError } = await supabase.from("product_variants").insert(
-        variants.map((v) => {
-          const generatedSku = v.sku?.trim() || `${slug}-${v.size || "ALL"}-${v.color || "ALL"}-${randomUUID().slice(0, 8)}`.toUpperCase();
-          return {
-            product_id: product.id,
-            size: v.size || "M",
-            color: v.color || "Black",
-            sku: generatedSku,
-            stock_qty: v.stock_qty ?? 0,
-            price_override: v.price_override ?? null,
-          };
-        })
-      );
-      if (variantError) {
-        return NextResponse.json({ error: "Failed to create product variants" }, { status: 500 });
-      }
+      const variantRecords = variants.map((v) => {
+        const generatedSku =
+          v.sku?.trim() ||
+          `${slug}-${v.size || "ALL"}-${v.color || "ALL"}-${randomUUID().slice(0, 8)}`.toUpperCase();
+        return {
+          product_id: product.id,
+          size: v.size || "M",
+          color: v.color || "Black",
+          sku: generatedSku,
+          stock_qty: v.stock_qty ?? 0,
+          price_override: v.price_override ?? null,
+        };
+      });
+      insertTasks.push(Promise.resolve(supabase.from("product_variants").insert(variantRecords)));
     }
 
     if (images?.length) {
-      const { error: imgError } = await supabase.from("product_images").insert(
-        images.map((url, index) => ({
-          product_id: product.id,
-          url,
-          position: index,
-        }))
-      );
-      if (imgError) {
-        return NextResponse.json({ error: "Failed to create product images" }, { status: 500 });
+      const imageRecords = images.map((url, index) => ({
+        product_id: product.id,
+        url,
+        position: index,
+      }));
+      insertTasks.push(Promise.resolve(supabase.from("product_images").insert(imageRecords)));
+    }
+
+    if (insertTasks.length > 0) {
+      const results = await Promise.all(insertTasks);
+      for (const res of results) {
+        if ((res as any)?.error) {
+          logServerError("Error inserting product children", (res as any).error);
+        }
       }
     }
 
+
     try {
-      const { revalidatePath } = await import("next/cache");
+      const { revalidatePath, revalidateTag } = await import("next/cache");
       revalidatePath("/");
+      revalidateTag("products");
+      revalidateTag("home-products");
     } catch {}
 
     return NextResponse.json({ product });
+
   } catch (err) {
     logServerError("Admin product request failed", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
