@@ -203,7 +203,7 @@ export default async function HomePage({ searchParams }: Props) {
             {[
               { icon: "🧵", title: "Premium Cotton", desc: "100% combed ring-spun" },
               { icon: "🚚", title: "Fast Delivery", desc: "Nationwide in 3-5 days" },
-              { icon: "🔒", title: "Secure Checkout", desc: "COD & JazzCash/Easypaisa" },
+              { icon: "🔒", title: "Secure Checkout", desc: "Cash on Delivery (COD)" },
               { icon: "↩️", title: "Easy Returns", desc: "Hassle-free policy" },
             ].map((item) => (
               <div key={item.title} className="flex flex-col items-center gap-1.5 sm:gap-2 p-2">

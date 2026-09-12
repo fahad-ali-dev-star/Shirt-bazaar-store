@@ -32,8 +32,8 @@ export const metadata: Metadata = {
     default: "Shirt Bazaar | Premium Quality Shirts & Drops",
     template: "%s | Shirt Bazaar",
   },
-  description: "Premium cotton shirts, fast nationwide delivery across Pakistan, and secure checkout via JazzCash, Easypaisa, and Cash on Delivery.",
-  keywords: ["shirts", "t-shirts", "cotton shirts", "pakistan fashion", "menswear", "shirt bazaar", "jazzcash", "easypaisa"],
+  description: "Premium cotton shirts, fast nationwide delivery across Pakistan, and secure Cash on Delivery checkout.",
+  keywords: ["shirts", "t-shirts", "cotton shirts", "pakistan fashion", "menswear", "shirt bazaar", "cash on delivery", "cod"],
   openGraph: {
     title: "Shirt Bazaar | Premium Quality Shirts & Drops",
     description: "Quality shirts, fast checkout, nationwide delivery in Pakistan.",
@@ -144,10 +144,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <p>© {new Date().getFullYear()} Shirt Bazaar. All rights reserved.</p>
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
                 <span>Accepted Payments:</span>
-                <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">💵 COD</span>
-                <span className="font-semibold text-red-700 bg-red-50 px-2 py-0.5 rounded">📱 JazzCash</span>
-                <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">🟢 Easypaisa</span>
-                <span className="font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded">💳 Card</span>
+                <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">💵 Cash on Delivery (COD)</span>
               </div>
             </div>
           </div>

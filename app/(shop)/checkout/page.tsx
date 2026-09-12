@@ -252,11 +252,13 @@ function CheckoutForm() {
                   {
                     id: "cod",
                     icon: "💵",
-                    title: "Cash on Delivery",
+                    title: "Cash on Delivery (COD)",
                     desc: "Pay in cash when your parcel arrives at your doorstep.",
-                    badge: "Most Popular",
+                    badge: "Available",
                     disabled: false,
                   },
+                  /*
+                  // ── Digital Wallet & Card Payments (Uncomment to re-enable) ──
                   {
                     id: "jazzcash",
                     icon: "📱",
@@ -281,6 +283,7 @@ function CheckoutForm() {
                     badge: "Coming Soon",
                     disabled: true,
                   },
+                  */
                 ].map((opt) => (
                   <div
                     key={opt.id}
