@@ -95,6 +95,22 @@ export type StoreBanner = {
   updated_at: string;
 };
 
+export type ProductReview = {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  author_name: string;
+  author_email: string | null;
+  rating: number;
+  title: string | null;
+  comment: string;
+  is_verified_buyer: boolean;
+  status: "approved" | "pending" | "rejected";
+  helpful_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -106,6 +122,7 @@ export type Database = {
       orders: TableDefinition<Order>;
       order_items: TableDefinition<OrderItem>;
       store_banners: TableDefinition<StoreBanner>;
+      product_reviews: TableDefinition<ProductReview>;
     };
     Views: Record<string, never>;
     Functions: {

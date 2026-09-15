@@ -15,6 +15,7 @@ import {
   Megaphone,
   Menu,
   X,
+  MessageSquare,
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -41,6 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin", label: "Analytics", icon: <BarChart3 size={16} />, active: pathname === "/admin" },
     { href: "/admin/products", label: "Products", icon: <Package size={16} />, active: pathname.startsWith("/admin/products") },
     { href: "/admin/orders", label: "Orders", icon: <ShoppingBag size={16} />, active: pathname.startsWith("/admin/orders") },
+    { href: "/admin/reviews", label: "Reviews", icon: <MessageSquare size={16} />, active: pathname.startsWith("/admin/reviews") },
     { href: "/admin/offers", label: "Offers & Promos", icon: <Megaphone size={16} />, active: pathname.startsWith("/admin/offers") },
     { href: "/admin/banner", label: "Hero Banner", icon: <ImageIcon size={16} />, active: pathname.startsWith("/admin/banner") },
   ];

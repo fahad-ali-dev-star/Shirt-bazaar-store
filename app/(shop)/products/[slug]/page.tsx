@@ -6,6 +6,7 @@ import { ChevronRight, ShieldCheck, RotateCcw, Truck, Star, Sparkles } from "luc
 import { AddToCartForm } from "./add-to-cart-form";
 import { ProductImageGallery } from "./gallery";
 import { WishlistButton } from "@/components/wishlist-button";
+import { ProductReviews } from "@/components/reviews/product-reviews";
 import type { Metadata } from "next";
 
 import { getCachedProductBySlug, getCachedHomeProducts } from "@/lib/supabase/cached-queries";
@@ -137,12 +138,19 @@ export default async function ProductPage({ params }: Props) {
             </div>
 
             {/* Customer Rating Indicator */}
-            <div className="flex items-center gap-1.5 mt-2.5 sm:mt-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-              ))}
-              <span className="text-xs text-slate-500 ml-1 font-medium">5.0 ★ Customer Verified Quality</span>
-            </div>
+            <a
+              href="#reviews"
+              className="flex items-center gap-1.5 mt-2.5 sm:mt-3 group cursor-pointer hover:opacity-80 transition-opacity"
+            >
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
+                ))}
+              </div>
+              <span className="text-xs text-slate-500 ml-1 font-medium group-hover:text-brand-600 transition-colors">
+                Customer Reviews & Ratings ↓
+              </span>
+            </a>
 
             {/* Price */}
             <div className="mt-4 sm:mt-5 flex items-baseline gap-2">
@@ -191,6 +199,9 @@ export default async function ProductPage({ params }: Props) {
 
         </div>
       </div>
+
+      {/* ── Customer Reviews & Ratings ── */}
+      <ProductReviews productId={product.id} productName={product.name} />
 
       {/* ── Related Products ("You May Also Like") ── */}
       {relatedProducts && relatedProducts.length > 0 && (

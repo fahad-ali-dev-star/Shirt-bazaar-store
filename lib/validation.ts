@@ -325,3 +325,57 @@ export function validateProductInput(value: unknown, partial = false): { ok: tru
 export function parseJsonObject(body: unknown): Record<string, unknown> | null {
   return body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
 }
+
+export type ReviewInput = {
+  author_name: string;
+  author_email?: string | null;
+  rating: number;
+  title?: string | null;
+  comment: string;
+};
+
+export const MAX_REVIEW_NAME = 60;
+export const MAX_REVIEW_TITLE = 120;
+export const MAX_REVIEW_COMMENT = 2000;
+
+export function validateReviewInput(value: unknown): { ok: true; value: ReviewInput } | { ok: false; error: string } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { ok: false, error: "Invalid review data" };
+  }
+  const input = value as Record<string, unknown>;
+
+  if (!isSafeText(input.author_name, MAX_REVIEW_NAME)) {
+    return { ok: false, error: "Please enter your name (up to 60 characters)." };
+  }
+
+  if (input.author_email !== undefined && input.author_email !== null && String(input.author_email).trim() !== "") {
+    if (!isEmail(String(input.author_email).trim())) {
+      return { ok: false, error: "Please enter a valid email address or leave it blank." };
+    }
+  }
+
+  if (typeof input.rating !== "number" || !Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+    return { ok: false, error: "Please select a valid rating between 1 and 5 stars." };
+  }
+
+  if (input.title !== undefined && input.title !== null && String(input.title).trim() !== "") {
+    if (!isSafeText(input.title, MAX_REVIEW_TITLE)) {
+      return { ok: false, error: "Review title is too long (maximum 120 characters)." };
+    }
+  }
+
+  if (!isSafeText(input.comment, MAX_REVIEW_COMMENT) || String(input.comment).trim().length < 5) {
+    return { ok: false, error: "Please write a review comment (between 5 and 2000 characters)." };
+  }
+
+  return {
+    ok: true,
+    value: {
+      author_name: String(input.author_name).trim(),
+      author_email: input.author_email ? String(input.author_email).trim().toLowerCase() : null,
+      rating: input.rating,
+      title: input.title ? String(input.title).trim() : null,
+      comment: String(input.comment).trim(),
+    },
+  };
+}
