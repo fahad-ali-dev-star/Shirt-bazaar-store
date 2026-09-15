@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { logServerError } from "@/lib/api/errors";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { isUuid, parseJsonObject, validateProductInput } from "@/lib/validation";
 import { randomUUID } from "crypto";
 
@@ -145,12 +145,16 @@ export async function PATCH(
     }
   }
 
-  // On-demand ISR: the storefront page for this product was cached for up
-  // to an hour — bust it immediately so the edit shows right away.
-  if (product?.slug) {
-    revalidatePath(`/products/${product.slug}`);
-  }
-  revalidatePath("/");
+  // On-demand ISR: bust caches immediately so the edit shows right away
+  try {
+    if (product?.slug) {
+      revalidatePath(`/products/${product.slug}`);
+    }
+    revalidatePath("/");
+    revalidatePath("/admin/products");
+    revalidateTag("products");
+    revalidateTag("home-products");
+  } catch {}
 
   return NextResponse.json({ product });
 }
@@ -170,6 +174,13 @@ export async function DELETE(
   const { error } = await supabase.from("products").update({ is_active: false }).eq("id", id);
 
   if (error) return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
-  revalidatePath("/");
+  
+  try {
+    revalidatePath("/");
+    revalidatePath("/admin/products");
+    revalidateTag("products");
+    revalidateTag("home-products");
+  } catch {}
+
   return NextResponse.json({ success: true });
 }

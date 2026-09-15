@@ -41,14 +41,14 @@ export async function POST(req: NextRequest) {
     const payload = parseJsonObject(body);
     const result = validateProductInput(payload, false);
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
-    const { name, slug, description, base_price, category, variants, images } = result.value;
+    const { name, slug, description, base_price, category, is_active, variants, images } = result.value;
     if (!slug) return NextResponse.json({ error: "Invalid product slug" }, { status: 400 });
 
     const supabase = createAdminClient();
 
     const { data: product, error } = await supabase
       .from("products")
-      .insert({ name, slug, description, base_price, category, is_active: true })
+      .insert({ name, slug, description, base_price, category, is_active: is_active ?? true })
       .select()
       .single();
 
@@ -91,10 +91,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-
     try {
       const { revalidatePath, revalidateTag } = await import("next/cache");
       revalidatePath("/");
+      revalidatePath("/admin/products");
       revalidateTag("products");
       revalidateTag("home-products");
     } catch {}
