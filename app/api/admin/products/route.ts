@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { parseJsonObject, validateProductInput } from "@/lib/validation";
 import { randomUUID } from "crypto";
+import { invalidateCache } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -92,6 +93,11 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      await invalidateCache(
+        "cache:store:home-products",
+        `cache:store:product:${slug}`,
+        category ? `cache:store:category:${category}` : ""
+      );
       const { revalidatePath, revalidateTag } = await import("next/cache");
       revalidatePath("/");
       revalidatePath("/admin/products");

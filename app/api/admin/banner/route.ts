@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { invalidateCache } from "@/lib/redis";
 
 export async function GET() {
   try {
@@ -71,6 +72,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+      await invalidateCache("cache:store:banners");
       revalidatePath("/");
       revalidateTag("banners");
       revalidateTag("home-banner");
@@ -143,6 +145,7 @@ export async function PUT(req: NextRequest) {
     }
 
     try {
+      await invalidateCache("cache:store:banners");
       revalidatePath("/");
       revalidateTag("banners");
       revalidateTag("home-banner");
@@ -180,6 +183,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     try {
+      await invalidateCache("cache:store:banners");
       revalidatePath("/");
       revalidateTag("banners");
       revalidateTag("home-banner");

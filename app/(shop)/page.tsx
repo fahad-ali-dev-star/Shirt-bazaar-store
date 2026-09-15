@@ -5,7 +5,8 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { HeroBanner } from "@/components/hero-banner";
 import { WishlistButton } from "@/components/wishlist-button";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

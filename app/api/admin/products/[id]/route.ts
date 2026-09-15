@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { isUuid, parseJsonObject, validateProductInput } from "@/lib/validation";
 import { randomUUID } from "crypto";
+import { invalidateCache } from "@/lib/redis";
 
 export async function GET(
   _req: NextRequest,
@@ -147,6 +148,11 @@ export async function PATCH(
 
   // On-demand ISR: bust caches immediately so the edit shows right away
   try {
+    await invalidateCache(
+      "cache:store:home-products",
+      product?.slug ? `cache:store:product:${product.slug}` : "",
+      category ? `cache:store:category:${category}` : ""
+    );
     if (product?.slug) {
       revalidatePath(`/products/${product.slug}`);
     }
@@ -171,11 +177,21 @@ export async function DELETE(
   const supabase = createAdminClient();
 
   // Soft delete — keeps order history intact for past purchases of this product.
-  const { error } = await supabase.from("products").update({ is_active: false }).eq("id", id);
+  const { data: updatedProduct, error } = await supabase
+    .from("products")
+    .update({ is_active: false })
+    .eq("id", id)
+    .select("slug, category")
+    .single();
 
   if (error) return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
   
   try {
+    await invalidateCache(
+      "cache:store:home-products",
+      updatedProduct?.slug ? `cache:store:product:${updatedProduct.slug}` : "",
+      updatedProduct?.category ? `cache:store:category:${updatedProduct.category}` : ""
+    );
     revalidatePath("/");
     revalidatePath("/admin/products");
     revalidateTag("products");
