@@ -262,17 +262,81 @@ export default function AdminOrdersPage() {
               ))}
             </div>
 
-            {/* Customer & Address Footer */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-slate-100 pt-3 text-xs sm:text-sm gap-2">
-              <div className="text-slate-600">
-                <span className="font-semibold text-slate-800">Ship to: </span>
-                {order.shipping_address?.fullName}, {order.shipping_address?.address}, {order.shipping_address?.city}{" "}
-                {order.shipping_address?.phone && (
-                  <span className="text-slate-500 font-mono">({order.shipping_address.phone})</span>
-                )}
+            {/* Customer & Address Details Box */}
+            <div className="border-t border-slate-100 pt-3.5 space-y-2.5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50/80 rounded-xl p-3 sm:p-3.5 border border-slate-100 text-xs">
+                {/* Contact Info */}
+                <div className="space-y-1">
+                  <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>👤</span>
+                    <span>{order.shipping_address?.fullName || "Customer"}</span>
+                  </p>
+                  {order.shipping_address?.email && (
+                    <p className="text-slate-600 flex items-center gap-1.5">
+                      <span className="text-slate-400">✉️</span>
+                      <a href={`mailto:${order.shipping_address.email}`} className="text-brand-600 hover:underline">
+                        {order.shipping_address.email}
+                      </a>
+                    </p>
+                  )}
+                  {order.shipping_address?.phone && (
+                    <p className="text-slate-700 flex items-center gap-1.5 font-medium">
+                      <span className="text-slate-400">📞</span>
+                      <a href={`tel:${order.shipping_address.phone}`} className="font-mono hover:underline">
+                        {order.shipping_address.phone}
+                      </a>
+                      <a
+                        href={`https://wa.me/${order.shipping_address.phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold hover:bg-emerald-200 transition"
+                      >
+                        WhatsApp
+                      </a>
+                    </p>
+                  )}
+                  {order.shipping_address?.alternatePhone && (
+                    <p className="text-slate-500 flex items-center gap-1.5 text-[11px]">
+                      <span className="text-slate-400">📱 Alt:</span>
+                      <span className="font-mono">{order.shipping_address.alternatePhone}</span>
+                    </p>
+                  )}
+                </div>
+
+                {/* Delivery Location */}
+                <div className="space-y-1">
+                  <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <span>📍</span>
+                    <span>{order.shipping_address?.city || "City"}</span>
+                  </p>
+                  <p className="text-slate-700 leading-relaxed">
+                    {order.shipping_address?.address || order.shipping_address?.streetAddress || "Address not specified"}
+                  </p>
+                  {order.shipping_address?.landmark && (
+                    <p className="text-amber-800 text-[11px] bg-amber-50 rounded px-2 py-0.5 border border-amber-200/60 inline-block font-medium">
+                      Landmark: {order.shipping_address.landmark}
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="font-extrabold text-slate-950 text-base self-end sm:self-auto">
-                Total: Rs {Number(order.total).toLocaleString()}
+
+              {/* Delivery Notes / Special Instructions */}
+              {order.shipping_address?.deliveryNotes && (
+                <div className="rounded-lg bg-blue-50/70 border border-blue-100 p-2.5 text-xs text-blue-900 flex items-start gap-2">
+                  <span className="shrink-0 text-sm">📝</span>
+                  <div>
+                    <span className="font-bold text-blue-950">Customer Delivery Note: </span>
+                    <span>{order.shipping_address.deliveryNotes}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Order Total Line */}
+              <div className="flex items-center justify-between pt-1 text-xs sm:text-sm">
+                <span className="text-slate-500 font-medium">Order Total (incl. Delivery & Discounts)</span>
+                <span className="font-extrabold text-slate-950 text-base">
+                  Rs {Number(order.total).toLocaleString()}
+                </span>
               </div>
             </div>
             

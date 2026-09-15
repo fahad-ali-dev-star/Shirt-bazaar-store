@@ -90,13 +90,9 @@ function CheckoutForm() {
     email: "",
     phone: "",
     alternatePhone: "",
-    houseNumber: "",
-    streetAddress: "",
+    address: "",
     landmark: "",
     city: "Karachi",
-    province: "Sindh",
-    postalCode: "",
-    addressType: "home" as "home" | "office" | "other",
     deliveryNotes: "",
   });
 
@@ -146,12 +142,8 @@ function CheckoutForm() {
       setError("Please enter a valid phone number for courier delivery.");
       return;
     }
-    if (!form.houseNumber.trim()) {
-      setError("Please enter your House, Apartment, or Flat number.");
-      return;
-    }
-    if (!form.streetAddress.trim()) {
-      setError("Please enter your Street address, Sector, Block, or Area.");
+    if (!form.address.trim()) {
+      setError("Please enter your complete delivery address.");
       return;
     }
     if (!form.city.trim()) {
@@ -172,12 +164,9 @@ function CheckoutForm() {
     setLoading(true);
 
     const synthesizedAddress = [
-      form.houseNumber.trim(),
-      form.streetAddress.trim(),
+      form.address.trim(),
       form.landmark.trim() ? `(Near ${form.landmark.trim()})` : "",
       form.city.trim(),
-      form.province ? form.province.trim() : "",
-      form.postalCode.trim() ? `Postal Code: ${form.postalCode.trim()}` : "",
     ]
       .filter(Boolean)
       .join(", ");
@@ -188,13 +177,9 @@ function CheckoutForm() {
       phone: form.phone.trim(),
       alternatePhone: form.alternatePhone.trim() || undefined,
       address: synthesizedAddress,
-      houseNumber: form.houseNumber.trim() || undefined,
-      streetAddress: form.streetAddress.trim() || undefined,
+      streetAddress: form.address.trim(),
       landmark: form.landmark.trim() || undefined,
       city: form.city.trim(),
-      province: form.province.trim() || undefined,
-      postalCode: form.postalCode.trim() || undefined,
-      addressType: form.addressType || "home",
       deliveryNotes: form.deliveryNotes.trim() || undefined,
     };
 
@@ -374,175 +359,93 @@ function CheckoutForm() {
             </div>
 
             {/* ── Section 2: Delivery Address ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs space-y-4">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
                 <span className="text-lg">📍</span>
                 <div>
                   <h2 className="text-sm font-bold text-slate-900">Delivery Address</h2>
-                  <p className="text-[11px] text-slate-500">Exact doorstep location for courier rider</p>
+                  <p className="text-[11px] text-slate-500">Where should we deliver your order?</p>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {/* House/Flat and Street/Sector in 2 columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="houseNumber" className={labelCls}>
-                      House / Flat / Floor No. <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="houseNumber"
-                      required
-                      placeholder="e.g. House # 42-B, 2nd Floor"
-                      value={form.houseNumber}
-                      onChange={(e) => setForm({ ...form, houseNumber: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
+              {/* Complete Address */}
+              <div>
+                <label htmlFor="address" className={labelCls}>
+                  Complete Delivery Address <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="address"
+                  required
+                  rows={2}
+                  placeholder="House / Flat #, Street, Sector, Block, Area or Colony"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                  className={`${inputCls} resize-none leading-relaxed`}
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  e.g. House # 42-B, Street 5, Sector F-10/2 or Flat 304, Al-Madina Heights, Block 13-D
+                </p>
+              </div>
 
-                  <div>
-                    <label htmlFor="streetAddress" className={labelCls}>
-                      Street / Sector / Block / Area <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="streetAddress"
-                      required
-                      placeholder="e.g. Street 4, Block 5, Gulshan-e-Iqbal"
-                      value={form.streetAddress}
-                      onChange={(e) => setForm({ ...form, streetAddress: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
+              {/* City and Nearby Landmark */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="city" className={labelCls}>
+                    City <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="city"
+                    required
+                    list="pakistan-cities"
+                    placeholder="Type or select city (e.g. Karachi, Lahore)"
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                    className={inputCls}
+                  />
+                  <datalist id="pakistan-cities">
+                    {POPULAR_CITIES.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
                 </div>
 
-                {/* Nearest Landmark */}
                 <div>
                   <div className="flex items-center justify-between">
                     <label htmlFor="landmark" className={labelCls}>
-                      Nearest Famous Landmark / Spot
+                      Nearby Landmark
                     </label>
-                    <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-medium">
-                      Helps Rider Find You
-                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium">(Optional)</span>
                   </div>
                   <input
                     id="landmark"
-                    placeholder="e.g. Near Al-Madina Masjid, Opposite Meezan Bank, Near Main Gate"
+                    placeholder="e.g. Near Meezan Bank / Main Gate"
                     value={form.landmark}
                     onChange={(e) => setForm({ ...form, landmark: e.target.value })}
                     className={inputCls}
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Providing a nearby landmark prevents courier delays or wrong deliveries.
-                  </p>
-                </div>
-
-                {/* City & Province & Postal Code */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-1">
-                    <label htmlFor="city" className={labelCls}>
-                      City <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      id="city"
-                      required
-                      list="pakistan-cities"
-                      placeholder="Type or select city"
-                      value={form.city}
-                      onChange={(e) => setForm({ ...form, city: e.target.value })}
-                      className={inputCls}
-                    />
-                    <datalist id="pakistan-cities">
-                      {POPULAR_CITIES.map((c) => (
-                        <option key={c} value={c} />
-                      ))}
-                    </datalist>
-                  </div>
-
-                  <div className="sm:col-span-1">
-                    <label htmlFor="province" className={labelCls}>
-                      Province / Region
-                    </label>
-                    <select
-                      id="province"
-                      value={form.province}
-                      onChange={(e) => setForm({ ...form, province: e.target.value })}
-                      className={`${inputCls} bg-white`}
-                    >
-                      {PAKISTAN_PROVINCES.map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="sm:col-span-1">
-                    <label htmlFor="postalCode" className={labelCls}>
-                      Postal / ZIP Code
-                    </label>
-                    <input
-                      id="postalCode"
-                      placeholder="e.g. 75300 (Optional)"
-                      value={form.postalCode}
-                      onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
-                      className={inputCls}
-                    />
-                  </div>
-                </div>
-
-                {/* Address Type selection */}
-                <div>
-                  <label className={labelCls + " mb-2"}>Address Type</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "home", label: "🏠 Home", desc: "All-day delivery" },
-                      { id: "office", label: "🏢 Office / Work", desc: "9 AM – 6 PM" },
-                      { id: "other", label: "📍 Other", desc: "Custom timings" },
-                    ].map((t) => (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => setForm({ ...form, addressType: t.id as "home" | "office" | "other" })}
-                        className={`rounded-xl border py-2 px-3 text-center transition-all ${
-                          form.addressType === t.id
-                            ? "border-brand-600 bg-brand-50/70 text-brand-900 font-semibold shadow-xs"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                        }`}
-                      >
-                        <span className="block text-xs font-semibold">{t.label}</span>
-                        <span className="block text-[10px] text-slate-400 mt-0.5">{t.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Section 3: Delivery Instructions / Notes ── */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
-                <span className="text-lg">📝</span>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900">Rider Instructions & Notes</h2>
-                  <p className="text-[11px] text-slate-500">Special requests for the delivery rider (optional)</p>
                 </div>
               </div>
 
+              {/* Delivery Note for Rider (Optional) */}
               <div>
-                <textarea
+                <div className="flex items-center justify-between">
+                  <label htmlFor="deliveryNotes" className={labelCls}>
+                    Delivery Instructions / Notes
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">(Optional)</span>
+                </div>
+                <input
                   id="deliveryNotes"
-                  rows={2}
-                  placeholder="e.g. Please call before coming, leave parcel with building security guard, or deliver after 3:00 PM."
+                  placeholder="e.g. Please call before coming or deliver after 2:00 PM"
                   value={form.deliveryNotes}
                   onChange={(e) => setForm({ ...form, deliveryNotes: e.target.value })}
-                  className="input-base mt-1 text-xs sm:text-sm resize-none"
-                  maxLength={400}
+                  className={inputCls}
+                  maxLength={300}
                 />
               </div>
             </div>
 
-            {/* ── Section 4: Payment Method ── */}
+            {/* ── Section 3: Payment Method ── */}
             <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs">
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100">
                 <span className="text-lg">💵</span>
