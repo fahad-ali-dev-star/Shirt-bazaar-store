@@ -4,13 +4,14 @@ import { createAdminClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 // Standard preset discount mappings
+// NOTE: FREESHIP is intentionally NOT listed here — it only works when
+// the admin explicitly activates it via Admin → Offers & Promotions panel.
 const STANDARD_CODES: Record<string, { percent: number; desc: string }> = {
   SAVE20: { percent: 20, desc: "20% Flash Sale Discount" },
   SAVE15: { percent: 15, desc: "15% Special Discount" },
   SAVE10: { percent: 10, desc: "10% Order Discount" },
   WELCOME15: { percent: 15, desc: "15% New Customer Welcome" },
   WELCOME10: { percent: 10, desc: "10% New Customer Welcome" },
-  FREESHIP: { percent: 10, desc: "Free Express Shipping Discount" },
   SUMMERDROP: { percent: 25, desc: "25% Summer Drop Exclusive" },
   VIP20: { percent: 20, desc: "20% VIP Member Discount" },
 };

@@ -45,13 +45,14 @@ async function resolveCouponDiscount(couponCode: string | null): Promise<number>
     console.warn("Could not check active promo for checkout discount:", err);
   }
 
+  // NOTE: FREESHIP is intentionally NOT listed here — it only works
+  // when the admin explicitly activates it via the Offers panel.
   const STANDARD_CODES: Record<string, number> = {
     SAVE20: 20,
     SAVE15: 15,
     SAVE10: 10,
     WELCOME15: 15,
     WELCOME10: 10,
-    FREESHIP: 10,
     SUMMERDROP: 25,
     VIP20: 20,
   };
