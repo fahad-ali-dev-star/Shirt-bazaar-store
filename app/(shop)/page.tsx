@@ -1,4 +1,4 @@
-import { getCachedBanner, getCachedHomeProducts, searchProducts } from "@/lib/supabase/cached-queries";
+import { getCachedBanners, getCachedHomeProducts, searchProducts } from "@/lib/supabase/cached-queries";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -17,15 +17,15 @@ export default async function HomePage({ searchParams }: Props) {
   const q = rawQ.length > 0 ? rawQ.slice(0, 80) : undefined;
 
   // Parallel cached fetch for instant response
-  const [banner, products] = await Promise.all([
-    getCachedBanner(),
+  const [banners, products] = await Promise.all([
+    getCachedBanners(),
     q ? searchProducts(q) : getCachedHomeProducts(),
   ]);
 
   return (
     <main className="w-full animate-fade-in">
       {/* Hero */}
-      {!q && <HeroBanner banner={banner} />}
+      {!q && <HeroBanner banners={banners} />}
 
       {/* ── Section Header ── */}
       <section id="products" className="mx-auto max-w-6xl px-4 pt-12 sm:pt-20 pb-4 scroll-mt-20">

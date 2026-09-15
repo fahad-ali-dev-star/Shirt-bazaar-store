@@ -1,8 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { ArrowRight, ExternalLink, RefreshCw, CheckCircle2, Eye, ImageIcon, Maximize2, Sliders } from "lucide-react";
+import Image from "next/image";
+import {
+  ArrowRight,
+  ExternalLink,
+  CheckCircle2,
+  Sliders,
+  Plus,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Layers,
+  Clock,
+  Eye,
+} from "lucide-react";
 
 interface BannerConfig {
   id?: string;
@@ -16,8 +30,6 @@ interface BannerConfig {
   secondary_cta_text: string;
   secondary_cta_link: string;
   overlay_opacity: number;
-  banner_height: "tall" | "screen" | "standard";
-  image_fit: "cover" | "contain";
 }
 
 const PRESET_BANNERS = [
@@ -33,61 +45,122 @@ const PRESET_BANNERS = [
     label: "Clean Monochrome Apparel",
     url: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=1920&q=80",
   },
+  {
+    label: "Vintage Denim & Flannel",
+    url: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1920&q=80",
+  },
 ];
 
+const DEFAULT_BANNER: BannerConfig = {
+  is_active: true,
+  image_url: "/hero_banner.png",
+  badge_text: "SPRING / SUMMER 2026 DROP",
+  title: "Essentials, Elevated.",
+  subtitle:
+    "Discover our new collection of premium cotton t-shirts. Designed for everyday comfort, crafted to last a lifetime.",
+  cta_text: "Shop Collection",
+  cta_link: "#products",
+  secondary_cta_text: "Explore Oversized",
+  secondary_cta_link: "/category/oversized",
+  overlay_opacity: 50,
+};
+
 export default function AdminBannerPage() {
+  const [banners, setBanners] = useState<BannerConfig[]>([]);
+  const [activeTab, setActiveTab] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState<BannerConfig>({
-    is_active: true,
-    image_url: "/hero_banner.png",
-    badge_text: "SPRING / SUMMER 2026 DROP",
-    title: "Essentials, Elevated.",
-    subtitle: "Discover our new collection of premium cotton t-shirts. Designed for everyday comfort, crafted to last a lifetime.",
-    cta_text: "Shop Collection",
-    cta_link: "#products",
-    secondary_cta_text: "Explore Oversized",
-    secondary_cta_link: "/category/oversized",
-    overlay_opacity: 50,
-    banner_height: "tall",
-    image_fit: "cover",
-  });
+  // Live preview carousel state
+  const [previewIndex, setPreviewIndex] = useState<number>(0);
 
   useEffect(() => {
-    async function loadBanner() {
+    async function loadBanners() {
       try {
+        setLoading(true);
         const res = await fetch("/api/admin/banner");
         if (res.ok) {
           const json = await res.json();
-          if (json.banner) {
-            setForm({
-              id: json.banner.id,
-              is_active: json.banner.is_active ?? true,
-              image_url: json.banner.image_url || "/hero_banner.png",
-              badge_text: json.banner.badge_text || "",
-              title: json.banner.title || "Essentials, Elevated.",
-              subtitle: json.banner.subtitle || "",
-              cta_text: json.banner.cta_text || "Shop Collection",
-              cta_link: json.banner.cta_link || "#products",
-              secondary_cta_text: json.banner.secondary_cta_text || "",
-              secondary_cta_link: json.banner.secondary_cta_link || "",
-              overlay_opacity: json.banner.overlay_opacity ?? 50,
-              banner_height: json.banner.banner_height || "tall",
-              image_fit: json.banner.image_fit || "cover",
-            });
-          }
+          const list: BannerConfig[] = Array.isArray(json.banners) && json.banners.length > 0
+            ? json.banners.map((b: any) => ({
+                id: b.id,
+                is_active: b.is_active ?? true,
+                image_url: b.image_url || "/hero_banner.png",
+                badge_text: b.badge_text || "",
+                title: b.title || "Essentials, Elevated.",
+                subtitle: b.subtitle || "",
+                cta_text: b.cta_text || "Shop Collection",
+                cta_link: b.cta_link || "#products",
+                secondary_cta_text: b.secondary_cta_text || "",
+                secondary_cta_link: b.secondary_cta_link || "",
+                overlay_opacity: b.overlay_opacity ?? 50,
+              }))
+            : [DEFAULT_BANNER];
+
+          setBanners(list);
         }
       } catch (err: unknown) {
-        console.error("Failed to load banner config:", err);
+        console.error("Failed to load banners:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadBanner();
+    loadBanners();
   }, []);
+
+  const currentBanner = banners[activeTab] || banners[0] || DEFAULT_BANNER;
+
+  function updateCurrentBanner(patch: Partial<BannerConfig>) {
+    setBanners((prev) =>
+      prev.map((b, idx) => (idx === activeTab ? { ...b, ...patch } : b))
+    );
+  }
+
+  function handleAddBanner() {
+    if (banners.length >= 5) {
+      alert("You can add up to 5 hero banners.");
+      return;
+    }
+
+    const newBanner: BannerConfig = {
+      is_active: true,
+      image_url: PRESET_BANNERS[banners.length % PRESET_BANNERS.length].url,
+      badge_text: `EXCLUSIVE DROP 0${banners.length + 1}`,
+      title: "New Season Arrivals",
+      subtitle: "Experience luxury heavyweight combed cotton. Engineered for superior comfort.",
+      cta_text: "Explore Now",
+      cta_link: "#products",
+      secondary_cta_text: "View All",
+      secondary_cta_link: "/#products",
+      overlay_opacity: 50,
+    };
+
+    setBanners((prev) => [...prev, newBanner]);
+    setActiveTab(banners.length);
+  }
+
+  async function handleDeleteBanner(index: number) {
+    if (banners.length <= 1) {
+      alert("You must keep at least 1 hero banner.");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this banner?")) return;
+
+    const target = banners[index];
+    if (target.id) {
+      try {
+        await fetch(`/api/admin/banner?id=${target.id}`, { method: "DELETE" });
+      } catch (err) {
+        console.warn("Delete request failed:", err);
+      }
+    }
+
+    setBanners((prev) => prev.filter((_, idx) => idx !== index));
+    setActiveTab((prev) => Math.max(0, prev >= index ? prev - 1 : prev));
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -96,10 +169,11 @@ export default function AdminBannerPage() {
     setSaveSuccess(false);
 
     try {
+      // Save current banner
       const res = await fetch("/api/admin/banner", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, media_type: "image" }),
+        body: JSON.stringify({ ...currentBanner, media_type: "image" }),
       });
 
       if (!res.ok) {
@@ -109,8 +183,11 @@ export default function AdminBannerPage() {
 
       const json = await res.json();
       if (json.banner?.id) {
-        setForm((prev) => ({ ...prev, id: json.banner.id }));
+        setBanners((prev) =>
+          prev.map((b, idx) => (idx === activeTab ? { ...b, id: json.banner.id } : b))
+        );
       }
+
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: unknown) {
@@ -119,6 +196,20 @@ export default function AdminBannerPage() {
       setSaving(false);
     }
   }
+
+  // Live preview auto-cycle (every 3 seconds for active banners)
+  const activeBanners = banners.filter((b) => b.is_active);
+  useEffect(() => {
+    if (activeBanners.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setPreviewIndex((prev) => (prev + 1) % activeBanners.length);
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [activeBanners.length]);
+
+  const previewBanner = activeBanners[previewIndex] || currentBanner;
 
   if (loading) {
     return (
@@ -129,20 +220,21 @@ export default function AdminBannerPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-3.5 sm:px-6 py-4 sm:py-8">
+    <div className="mx-auto max-w-7xl px-3.5 sm:px-6 py-4 sm:py-8 space-y-6">
       {/* Top Header */}
-      <div className="mb-6 sm:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Homepage Hero Banner Manager
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+              Hero Banners Slider Manager
             </h1>
-            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200">
-              High Impact Cover
+            <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-semibold text-brand-700 border border-brand-200 flex items-center gap-1">
+              <Clock size={12} />
+              Auto-Scrolls Every 4.5 Seconds
             </span>
           </div>
           <p className="mt-1 text-xs sm:text-sm text-slate-500">
-            Control the prime digital billboard of your store. Adjust height, cover fit, image URL, and text contrast.
+            Add 2 or 3 rotating banners. When multiple active banners are added, they automatically scroll every 4.5s on the homepage.
           </p>
         </div>
 
@@ -151,367 +243,369 @@ export default function AdminBannerPage() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition shadow-xs"
           >
-            <Eye className="h-4 w-4 text-slate-500" />
-            <span>View Live Storefront</span>
-            <ExternalLink className="h-3.5 w-3.5 text-slate-400" />
+            <span>Live Store</span>
+            <ExternalLink size={13} className="text-slate-400" />
           </Link>
 
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-lg bg-black px-4 sm:px-5 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition shadow-sm"
+            className="btn-primary text-xs px-5 py-2 flex items-center gap-2 disabled:opacity-50"
           >
             {saving ? (
               <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 <span>Saving...</span>
               </>
-            ) : saveSuccess ? (
-              <>
-                <CheckCircle2 className="h-4 w-4 text-green-400" />
-                <span>Published!</span>
-              </>
             ) : (
-              <span>Publish Changes</span>
+              <span>Save Banner Changes</span>
             )}
           </button>
         </div>
       </div>
 
+      {saveSuccess && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 flex items-center gap-2 animate-slide-up">
+          <CheckCircle2 size={16} className="text-emerald-600" />
+          <span>Hero banner updated successfully! Live homepage cache has been refreshed.</span>
+        </div>
+      )}
+
       {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700">
           {error}
         </div>
       )}
 
-      {saveSuccess && (
-        <div className="mb-6 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <span>Hero banner updated successfully! Live on your storefront.</span>
+      {/* ── Banner Tabs Selector ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+          {banners.map((b, idx) => {
+            const isSelected = idx === activeTab;
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setActiveTab(idx);
+                  setPreviewIndex(idx % Math.max(1, activeBanners.length));
+                }}
+                className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition-all shrink-0 ${
+                  isSelected
+                    ? "bg-slate-900 text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                <Layers size={13} />
+                <span>Banner {idx + 1}</span>
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    b.is_active ? "bg-emerald-400" : "bg-slate-400"
+                  }`}
+                  title={b.is_active ? "Active" : "Inactive"}
+                />
+              </button>
+            );
+          })}
+
+          {banners.length < 5 && (
+            <button
+              type="button"
+              onClick={handleAddBanner}
+              className="flex items-center gap-1.5 rounded-xl border border-dashed border-slate-300 hover:border-brand-500 bg-slate-50/50 hover:bg-brand-50/50 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-brand-700 transition shrink-0"
+            >
+              <Plus size={14} />
+              <span>Add Banner ({banners.length}/5)</span>
+            </button>
+          )}
         </div>
-      )}
 
-      <form onSubmit={handleSave} className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-        {/* Left Column: Form Controls (7 cols) */}
-        <div className="space-y-6 lg:col-span-7">
-          {/* Card 1: Image URL & Sizing */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
-            <h2 className="text-base font-semibold text-slate-900 mb-4 flex items-center gap-2">
-              <ImageIcon className="h-4 w-4 text-brand-600" />
-              <span>1. Image URL & Display Adjustment</span>
-            </h2>
+        {banners.length > 1 && (
+          <button
+            type="button"
+            onClick={() => handleDeleteBanner(activeTab)}
+            className="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition font-semibold"
+          >
+            <Trash2 size={13} />
+            <span>Delete Banner {activeTab + 1}</span>
+          </button>
+        )}
+      </div>
 
-            <div className="space-y-5">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Image Path / Direct URL
+      {/* ── 2-Column: Form (Left) & Live Preview (Right) ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Form Editor (7 cols) */}
+        <div className="lg:col-span-7 space-y-5">
+          <form onSubmit={handleSave} className="space-y-5">
+            {/* Status & Preset Images */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Banner #{activeTab + 1} Visibility</h3>
+                  <p className="text-xs text-slate-500">Toggle whether this slide rotates on the homepage</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={currentBanner.is_active}
+                    onChange={(e) => updateCurrentBanner({ is_active: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600" />
+                </label>
+              </div>
+
+              {/* Image URL & Quick Presets */}
+              <div className="pt-3 border-t border-slate-100">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Background Image URL <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
-                  value={form.image_url}
-                  onChange={(e) => setForm((p) => ({ ...p, image_url: e.target.value }))}
-                  placeholder="/hero_banner.png or https://..."
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono text-slate-800 placeholder-slate-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
                   required
+                  type="text"
+                  value={currentBanner.image_url}
+                  onChange={(e) => updateCurrentBanner({ image_url: e.target.value })}
+                  placeholder="/hero_banner.png or https://images.unsplash.com/..."
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-900 font-mono focus:border-black focus:outline-none"
                 />
-              </div>
 
-              {/* Banner Height Options */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
-                  Hero Height Option
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {[
-                    { id: "tall", label: "Extra Tall (880px)", desc: "Show maximum photo" },
-                    { id: "screen", label: "Full Viewport (100vh)", desc: "Covers entire screen" },
-                    { id: "standard", label: "Standard (640px)", desc: "Compact layout" },
-                  ].map((h) => (
-                    <button
-                      key={h.id}
-                      type="button"
-                      onClick={() => setForm((p) => ({ ...p, banner_height: h.id as any }))}
-                      className={`rounded-xl border-2 p-3 text-left transition ${
-                        form.banner_height === h.id
-                          ? "border-brand-600 bg-brand-50/50 ring-2 ring-brand-100"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <span className="block font-semibold text-slate-900 text-xs">{h.label}</span>
-                      <span className="block text-[10px] text-slate-500 mt-0.5">{h.desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Image Fit: Cover vs Contain (Show Full Image) */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
-                  Image Fit Adjustment
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, image_fit: "cover" }))}
-                    className={`rounded-xl border-2 p-3 text-left transition ${
-                      form.image_fit === "cover"
-                        ? "border-brand-600 bg-brand-50/50 ring-2 ring-brand-100"
-                        : "border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
-                    <span className="block font-semibold text-slate-900 text-xs">Object Cover (Fill All)</span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">
-                      Fills entire space from edge-to-edge without empty gaps.
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setForm((p) => ({ ...p, image_fit: "contain" }))}
-                    className={`rounded-xl border-2 p-3 text-left transition ${
-                      form.image_fit === "contain"
-                        ? "border-brand-600 bg-brand-50/50 ring-2 ring-brand-100"
-                        : "border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
-                    <span className="block font-semibold text-slate-900 text-xs">Object Contain (Show Full Uncut Image)</span>
-                    <span className="block text-[11px] text-slate-500 mt-0.5">
-                      Displays 100% of the image with zero cropping.
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Quick Image Presets */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-2">
-                  Quick Image Presets:
-                </label>
-                <div className="flex flex-wrap gap-2">
+                {/* Quick presets */}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="text-[11px] font-semibold text-slate-400 self-center">Presets:</span>
                   {PRESET_BANNERS.map((preset) => (
                     <button
                       key={preset.label}
                       type="button"
-                      onClick={() => setForm((p) => ({ ...p, image_url: preset.url }))}
-                      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-                        form.image_url === preset.url
-                          ? "border-brand-600 bg-brand-50 text-brand-700 font-semibold"
-                          : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                      }`}
+                      onClick={() => updateCurrentBanner({ image_url: preset.url })}
+                      className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-200 transition"
                     >
-                      🖼️ {preset.label}
+                      {preset.label}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Vignette Overlay Slider */}
-              <div className="border-t border-slate-100 pt-4">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-600">
-                    Dark Vignette Overlay ({form.overlay_opacity}%)
-                  </label>
-                  <span className="text-xs text-slate-500">Lower = Brighter photo, Higher = Sharper text</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="90"
-                  step="5"
-                  value={form.overlay_opacity}
-                  onChange={(e) => setForm((p) => ({ ...p, overlay_opacity: Number(e.target.value) }))}
-                  className="w-full accent-black cursor-pointer"
-                />
-              </div>
             </div>
-          </div>
 
-          {/* Card 2: Headline & Text */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-            <h2 className="text-base font-semibold text-slate-900 mb-4">
-              2. Headlines & Copywriting
-            </h2>
+            {/* Content & Copy */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
+                Headlines & Marketing Copy
+              </h3>
 
-            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Campaign Tagline / Badge
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Top Eyebrow Badge
                 </label>
                 <input
                   type="text"
-                  value={form.badge_text}
-                  onChange={(e) => setForm((p) => ({ ...p, badge_text: e.target.value }))}
-                  placeholder="SPRING / SUMMER 2026 DROP"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 focus:border-black focus:outline-none"
+                  value={currentBanner.badge_text}
+                  onChange={(e) => updateCurrentBanner({ badge_text: e.target.value })}
+                  placeholder="e.g. SPRING / SUMMER 2026 DROP"
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-900 focus:border-black focus:outline-none font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Main Headline
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Main Headline <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-                  placeholder="Essentials, Elevated."
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-base font-medium text-slate-900 focus:border-black focus:outline-none"
                   required
+                  type="text"
+                  value={currentBanner.title}
+                  onChange={(e) => updateCurrentBanner({ title: e.target.value })}
+                  placeholder="e.g. Essentials, Elevated."
+                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-900 font-bold focus:border-black focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Subtitle Description
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Subtitle / Description
                 </label>
                 <textarea
                   rows={3}
-                  value={form.subtitle}
-                  onChange={(e) => setForm((p) => ({ ...p, subtitle: e.target.value }))}
-                  placeholder="Discover our new collection of heavy-cotton and oversized shirts..."
-                  className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-800 focus:border-black focus:outline-none"
+                  value={currentBanner.subtitle}
+                  onChange={(e) => updateCurrentBanner({ subtitle: e.target.value })}
+                  placeholder="Discover our new collection of premium cotton shirts..."
+                  className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 focus:border-black focus:outline-none leading-relaxed"
                 />
               </div>
             </div>
-          </div>
 
-          {/* Card 3: Call To Action Buttons */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-            <h2 className="text-base font-semibold text-slate-900 mb-4">
-              3. Call-To-Action (CTA) Buttons
-            </h2>
+            {/* CTAs & Links */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
+                Buttons & Links
+              </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Primary Button Text
-                </label>
-                <input
-                  type="text"
-                  value={form.cta_text}
-                  onChange={(e) => setForm((p) => ({ ...p, cta_text: e.target.value }))}
-                  placeholder="Shop Collection"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 focus:border-black focus:outline-none"
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Primary Button Text
+                  </label>
+                  <input
+                    type="text"
+                    value={currentBanner.cta_text}
+                    onChange={(e) => updateCurrentBanner({ cta_text: e.target.value })}
+                    placeholder="Shop Collection"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-black focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Primary Button Link
+                  </label>
+                  <input
+                    type="text"
+                    value={currentBanner.cta_link}
+                    onChange={(e) => updateCurrentBanner({ cta_link: e.target.value })}
+                    placeholder="#products or /category/casual-shirts"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-black focus:outline-none"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Primary Button Link
-                </label>
-                <input
-                  type="text"
-                  value={form.cta_link}
-                  onChange={(e) => setForm((p) => ({ ...p, cta_link: e.target.value }))}
-                  placeholder="#products or /category/t-shirts"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 focus:border-black focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Secondary Button Text (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={form.secondary_cta_text}
-                  onChange={(e) => setForm((p) => ({ ...p, secondary_cta_text: e.target.value }))}
-                  placeholder="Explore Oversized"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 focus:border-black focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Secondary Button Link
-                </label>
-                <input
-                  type="text"
-                  value={form.secondary_cta_link}
-                  onChange={(e) => setForm((p) => ({ ...p, secondary_cta_link: e.target.value }))}
-                  placeholder="/category/oversized"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-800 focus:border-black focus:outline-none"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Secondary Button Text (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={currentBanner.secondary_cta_text}
+                    onChange={(e) => updateCurrentBanner({ secondary_cta_text: e.target.value })}
+                    placeholder="Explore Oversized"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-black focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                    Secondary Button Link (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={currentBanner.secondary_cta_link}
+                    onChange={(e) => updateCurrentBanner({ secondary_cta_link: e.target.value })}
+                    placeholder="/category/oversized-tees"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-900 focus:border-black focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
-          </div>
+
+            {/* Dark Overlay Opacity */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Dark Vignette / Text Contrast ({currentBanner.overlay_opacity}%)
+                </label>
+                <span className="text-xs font-mono font-semibold text-slate-600">
+                  {currentBanner.overlay_opacity}%
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={90}
+                step={5}
+                value={currentBanner.overlay_opacity}
+                onChange={(e) => updateCurrentBanner({ overlay_opacity: Number(e.target.value) })}
+                className="w-full accent-black cursor-pointer"
+              />
+            </div>
+          </form>
         </div>
 
-        {/* Right Column: Realtime Live Preview (5 cols) */}
-        <div className="space-y-6 lg:col-span-5">
-          <div className="sticky top-20 rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Realtime Storefront Preview
-                </h3>
+        {/* Right Column: Interactive Live Carousel Preview (5 cols) */}
+        <div className="lg:col-span-5 space-y-4 sticky top-20">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                <Eye size={15} className="text-brand-600" />
+                <span>Live Slider Preview</span>
               </div>
-              <span className="text-[11px] font-medium text-slate-400">
-                {form.banner_height === "tall" ? "880px Height" : form.banner_height === "screen" ? "100vh Height" : "640px Height"}
-              </span>
+              {activeBanners.length > 1 ? (
+                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-200 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Auto-rotating (4.5s)
+                </span>
+              ) : (
+                <span className="text-[10px] text-slate-400 font-medium">Single Banner Mode</span>
+              )}
             </div>
 
-            {/* Mini Storefront Hero Mockup with proportional height */}
-            <div className={`relative ${form.banner_height === "screen" ? "aspect-[4/3]" : form.banner_height === "tall" ? "aspect-[16/11]" : "aspect-[16/9]"} w-full overflow-hidden rounded-xl bg-slate-950 text-white shadow-inner flex flex-col justify-end p-6 border border-slate-800 transition-all`}>
-              {/* Background Image rendering mode */}
-              <div
-                className={`absolute inset-0 h-full w-full ${form.image_fit === "contain" ? "bg-contain bg-no-repeat bg-center" : "bg-cover bg-center"} transition-all duration-300`}
-                style={{ backgroundImage: `url(${form.image_url || "/hero_banner.png"})` }}
+            {/* Banner Screen Mockup */}
+            <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner flex items-center justify-center text-white">
+              <Image
+                src={previewBanner.image_url || "/hero_banner.png"}
+                alt={previewBanner.title}
+                fill
+                className="object-cover transition-all duration-700"
+                unoptimized
               />
 
-              {/* Dynamic Overlay */}
+              {/* Overlay */}
               <div
-                className="absolute inset-0 bg-black transition-opacity"
-                style={{ opacity: form.overlay_opacity / 100 }}
+                className="absolute inset-0 bg-black"
+                style={{ opacity: previewBanner.overlay_opacity / 100 }}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
 
-              {/* Content Overlay */}
-              <div className="relative z-10 space-y-2">
-                {form.badge_text && (
-                  <span className="inline-block rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase text-white border border-white/30">
-                    {form.badge_text}
+              {/* Content Preview */}
+              <div className="relative z-10 p-5 w-full flex flex-col justify-center h-full">
+                {previewBanner.badge_text && (
+                  <span className="text-[9px] font-bold tracking-widest uppercase text-emerald-400 mb-1">
+                    {previewBanner.badge_text}
                   </span>
                 )}
-                <h4 className="text-2xl font-bold tracking-tight text-white leading-tight">
-                  {form.title}
-                </h4>
-                {form.subtitle && (
-                  <p className="text-xs text-slate-200 line-clamp-2 leading-relaxed opacity-90">
-                    {form.subtitle}
-                  </p>
-                )}
-
-                <div className="pt-2 flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-950 shadow-sm">
-                    {form.cta_text}
-                    <ArrowRight className="h-3 w-3" />
+                <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight line-clamp-2 mb-1 drop-shadow">
+                  {previewBanner.title}
+                </h2>
+                <p className="text-[10px] text-slate-300 line-clamp-2 mb-3 max-w-xs font-light">
+                  {previewBanner.subtitle}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="bg-white text-slate-900 px-2.5 py-1 rounded text-[10px] font-bold flex items-center gap-1 shadow">
+                    <span>{previewBanner.cta_text || "Shop"}</span>
+                    <ArrowRight size={10} />
                   </span>
-                  {form.secondary_cta_text && (
-                    <span className="inline-flex items-center rounded-full bg-white/10 backdrop-blur-md px-3 py-1.5 text-xs font-medium text-white border border-white/20">
-                      {form.secondary_cta_text}
+                  {previewBanner.secondary_cta_text && (
+                    <span className="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded text-[10px] font-medium">
+                      {previewBanner.secondary_cta_text}
                     </span>
                   )}
                 </div>
               </div>
+
+              {/* Indicators Mockup */}
+              {activeBanners.length > 1 && (
+                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
+                  {activeBanners.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setPreviewIndex(i)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === previewIndex ? "w-4 bg-white" : "w-1.5 bg-white/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="mt-4 rounded-xl bg-slate-50 p-3.5 text-xs text-slate-600 border border-slate-100">
-              <p className="font-semibold text-slate-800 mb-1">📐 Fit Options:</p>
-              <p>
-                • <strong>Object Cover</strong>: Expands your image to fill the entire tall screen with zero whitespace.<br />
-                • <strong>Object Contain</strong>: Shows the <strong>full uncut image</strong> without cropping any borders.
-              </p>
-            </div>
+            <p className="text-[11px] text-slate-400 text-center mt-2.5">
+              {activeBanners.length > 1
+                ? `${activeBanners.length} active banners rotating every 4.5 seconds.`
+                : "1 active banner will display statically on the home screen."}
+            </p>
           </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

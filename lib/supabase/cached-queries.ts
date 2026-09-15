@@ -113,8 +113,40 @@ export const getCachedHomeProducts = unstable_cache(
   }
 );
 
-export const getCachedBanner = unstable_cache(
-  async () => {
+export interface HeroBannerItem {
+  id?: string;
+  is_active?: boolean;
+  image_url?: string | null;
+  badge_text?: string | null;
+  title: string;
+  subtitle: string;
+  cta_text: string;
+  cta_link: string;
+  secondary_cta_text?: string | null;
+  secondary_cta_link?: string | null;
+  overlay_opacity?: number;
+  banner_height?: "screen" | "tall" | "standard";
+  image_fit?: "cover" | "contain";
+}
+
+const FALLBACK_BANNER: HeroBannerItem = {
+  id: "default-banner",
+  is_active: true,
+  image_url: "/hero_banner.png",
+  badge_text: "SPRING / SUMMER 2026 DROP",
+  title: "Essentials, Elevated.",
+  subtitle: "Discover our new collection of premium cotton t-shirts. Designed for everyday comfort, crafted to last a lifetime.",
+  cta_text: "Shop Collection",
+  cta_link: "#products",
+  secondary_cta_text: "Explore Oversized",
+  secondary_cta_link: "/category/oversized",
+  overlay_opacity: 50,
+  banner_height: "tall",
+  image_fit: "cover",
+};
+
+export const getCachedBanners = unstable_cache(
+  async (): Promise<HeroBannerItem[]> => {
     return withTimeout(
       async () => {
         try {
@@ -124,25 +156,31 @@ export const getCachedBanner = unstable_cache(
             .select("*")
             .eq("is_active", true)
             .order("updated_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
+            .limit(5);
 
-          if (error) return null;
-          return data || null;
+          if (error || !data || data.length === 0) {
+            return [FALLBACK_BANNER];
+          }
+          return data as any;
         } catch {
-          return null;
+          return [FALLBACK_BANNER];
         }
       },
       8000,
-      null
+      [FALLBACK_BANNER]
     );
   },
-  ["home-store-banner"],
+  ["home-store-banners-list"],
   {
     revalidate: 30,
     tags: ["banners", "home-banner"],
   }
 );
+
+export const getCachedBanner = async (): Promise<HeroBannerItem | null> => {
+  const banners = await getCachedBanners();
+  return banners[0] || null;
+};
 
 
 export interface ProductDetailItem {
