@@ -5,6 +5,7 @@ import { PromoBar } from "@/components/promo-bar";
 import { NavBar } from "./nav-bar";
 import { TopLoader } from "@/components/top-loader";
 import { Logo } from "@/components/logo";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import Link from "next/link";
 
 const inter = Inter({
@@ -20,7 +21,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#4f46e5",
+  themeColor: "#1E3A8A",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -28,6 +29,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://fhdstore.pk"),
+  manifest: "/manifest.webmanifest",
   title: {
     default: "FHD Store | Premium Quality Shirts & Essentials",
     template: "%s | FHD Store",
@@ -48,10 +50,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
       { url: "/logo.svg", type: "image/svg+xml" },
     ],
     apple: [
-      { url: "/logo.svg", type: "image/svg+xml" },
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };
@@ -66,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="flex-1">
           {children}
         </div>
+        <PWAInstallPrompt />
 
         {/* ── Rich Footer ── */}
         <footer className="mt-24 border-t border-slate-200 bg-white">
