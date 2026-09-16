@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const product = await getCachedProductBySlug(slug);
 
   if (!product) {
-    return { title: "Product Not Found | Shirt Bazaar" };
+    return { title: "Product Not Found | FHD Store" };
   }
 
   const rawImages = (Array.isArray(product.product_images) ? product.product_images : []) as {
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const coverImage = sortedImages[0]?.url;
 
   return {
-    title: `${product.name} | Premium Shirt Bazaar`,
+    title: `${product.name} | Premium FHD Store`,
     description:
       product.description ||
       `Buy ${product.name} for Rs ${product.base_price}. Crafted from 100% premium combed cotton.`,

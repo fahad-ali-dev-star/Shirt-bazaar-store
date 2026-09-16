@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
         try {
           const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-          const prompt = `You are an expert fashion stylist and apparel sizing advisor for Shirt Bazaar.
+          const prompt = `You are an expert fashion stylist and apparel sizing advisor for FHD Store.
 Analyze the following customer physical body details and calculate the optimal shirt size recommendation:
 - Customer Height: ${numHeight} cm
 - Customer Weight: ${numWeight} kg

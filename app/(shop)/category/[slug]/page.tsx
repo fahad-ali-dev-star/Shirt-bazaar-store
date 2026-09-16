@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${title} | Premium Shirt Collection`,
     description: `Explore our premium collection of ${title.toLowerCase()} crafted from 100% combed cotton.`,
     openGraph: {
-      title: `${title} Collection | Shirt Bazaar`,
+      title: `${title} Collection | FHD Store`,
       description: `Shop high quality ${title.toLowerCase()} with fast delivery and easy returns.`,
     },
   };

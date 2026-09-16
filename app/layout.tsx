@@ -27,18 +27,18 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://shirtbazaar.pk"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://fhdstore.pk"),
   title: {
-    default: "Shirt Bazaar | Premium Quality Shirts & Drops",
-    template: "%s | Shirt Bazaar",
+    default: "FHD Store | Premium Quality Shirts & Essentials",
+    template: "%s | FHD Store",
   },
   description: "Premium cotton shirts, fast nationwide delivery across Pakistan, and secure Cash on Delivery checkout.",
-  keywords: ["shirts", "t-shirts", "cotton shirts", "pakistan fashion", "menswear", "shirt bazaar", "cash on delivery", "cod"],
+  keywords: ["shirts", "t-shirts", "cotton shirts", "pakistan fashion", "menswear", "fhd store", "fhd shirts", "cash on delivery", "cod"],
   openGraph: {
-    title: "Shirt Bazaar | Premium Quality Shirts & Drops",
+    title: "FHD Store | Premium Quality Shirts & Essentials",
     description: "Quality shirts, fast checkout, nationwide delivery in Pakistan.",
     url: "/",
-    siteName: "Shirt Bazaar",
+    siteName: "FHD Store",
     locale: "en_US",
     type: "website",
   },
@@ -141,7 +141,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
             {/* Bottom row */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 text-xs text-slate-400">
-              <p>© {new Date().getFullYear()} Shirt Bazaar. All rights reserved.</p>
+              <p>© {new Date().getFullYear()} FHD Store. All rights reserved.</p>
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
                 <span>Accepted Payments:</span>
                 <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">💵 Cash on Delivery (COD)</span>

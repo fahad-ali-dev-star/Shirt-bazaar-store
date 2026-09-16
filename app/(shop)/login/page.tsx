@@ -134,7 +134,7 @@ function LoginForm() {
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-400/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4" />
 
         <div className="relative z-10 text-center max-w-sm">
-          <p className="text-4xl font-extrabold tracking-tight mb-3">Shirt Bazaar.</p>
+          <p className="text-4xl font-extrabold tracking-tight mb-3">FHD Store.</p>
           <div className="w-12 h-1 bg-white/30 rounded-full mx-auto mb-6" />
           <p className="text-white/70 leading-relaxed text-sm">
             Premium cotton essentials designed for everyday comfort. Sign in to track your orders and manage your account.
@@ -160,7 +160,7 @@ function LoginForm() {
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12 bg-[#f8f8fb]">
         <div className="w-full max-w-md">
           {/* Logo (mobile only) */}
-          <p className="lg:hidden text-2xl font-extrabold gradient-text mb-6 sm:mb-8 text-center">Shirt Bazaar.</p>
+          <p className="lg:hidden text-2xl font-extrabold gradient-text mb-6 sm:mb-8 text-center">FHD Store.</p>
 
           <div className="card p-5 sm:p-8 shadow-card">
             {/* Title */}

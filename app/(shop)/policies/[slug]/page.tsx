@@ -17,7 +17,7 @@ type Policy = {
 const policies: Record<string, Policy> = {
   about: {
     title: "About Us",
-    intro: "Shirt Bazaar was built for people who want their basics to actually last.",
+    intro: "FHD Store was built for people who want their basics to actually last.",
     sections: [
       {
         heading: "What we value",
@@ -62,7 +62,7 @@ const policies: Record<string, Policy> = {
   },
   privacy: {
     title: "Privacy Policy",
-    intro: "Shirt Bazaar collects only the information needed to process and deliver your order.",
+    intro: "FHD Store collects only the information needed to process and deliver your order.",
     sections: [
       {
         heading: "Information we use",
@@ -78,9 +78,9 @@ const policies: Record<string, Policy> = {
     intro: "These terms help us keep ordering and delivery straightforward for everyone.",
     sections: [
       {
-        heading: "Using Shirt Bazaar",
+        heading: "Using FHD Store",
         bullets: [
-          "By placing an order with Shirt Bazaar, you agree to provide accurate delivery information and to be available to receive Cash on Delivery orders at the address provided.",
+          "By placing an order with FHD Store, you agree to provide accurate delivery information and to be available to receive Cash on Delivery orders at the address provided.",
           "We reserve the right to cancel orders that appear fraudulent or where delivery attempts repeatedly fail.",
           "Product prices and availability are subject to change without notice.",
           "Product images are for illustrative purposes; slight variations in color or texture may occur due to fabric batch differences.",
@@ -109,10 +109,10 @@ export default async function PolicyPage({ params }: { params: Promise<{ slug: s
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-16 sm:py-24">
       <Link href="/" className="text-sm font-semibold text-brand-600 hover:text-brand-700">
-        ← Back to Shirt Bazaar
+        ← Back to FHD Store
       </Link>
       <article className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Shirt Bazaar</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">FHD Store</p>
         <h1 className="mt-3 text-3xl font-bold text-slate-950 sm:text-4xl">{policy.title}</h1>
         <p className="mt-5 text-base leading-7 text-slate-600">{policy.intro}</p>
         <div className="mt-10 space-y-8">

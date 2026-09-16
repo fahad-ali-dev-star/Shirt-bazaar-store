@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
       } else {
         try {
           const imgRes = await fetch(imageUrl, {
-            headers: { "User-Agent": "ShirtBazaar/1.0" },
+            headers: { "User-Agent": "FHDStore/1.0" },
             signal: AbortSignal.timeout(5000),
           });
           if (imgRes.ok) {
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const prompt = `You are a fashion copywriter for "Shirt Bazaar", a luxury men's clothing store in Pakistan.
+    const prompt = `You are a fashion copywriter for "FHD Store", a luxury men's clothing store in Pakistan.
 Generate details for this shirt product ${currentName ? `(Title: "${currentName}")` : ""}.
 
 Return ONLY a JSON object with:

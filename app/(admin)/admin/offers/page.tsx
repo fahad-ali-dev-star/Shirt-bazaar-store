@@ -91,7 +91,7 @@ const CAMPAIGN_PRESETS = [
     icon: <Percent className="h-4 w-4 text-indigo-500" />,
     name: "New Customer 15%",
     badge: "WELCOME OFFER 🎉",
-    message: "Welcome to Shirt Bazaar! Take 15% off your first checkout.",
+    message: "Welcome to FHD Store! Take 15% off your first checkout.",
     code: "WELCOME15",
     cta_text: "Claim 15%",
     cta_link: "/#products",
@@ -669,7 +669,7 @@ export default function AdminOffersPage() {
 
           {/* Mock Navigation Strip underneath */}
           <div className="bg-white px-4 py-3 border-b border-slate-100 flex items-center justify-between text-xs opacity-60">
-            <span className="font-bold text-slate-800">Shirt Bazaar.</span>
+            <span className="font-bold text-slate-800">FHD Store.</span>
             <div className="flex gap-4 text-slate-600">
               <span>Home</span>
               <span>Catalog</span>
