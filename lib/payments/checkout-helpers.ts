@@ -26,6 +26,30 @@ type CheckoutVariant = {
   qty: number;
 };
 
+async function resolveRecipientDetails(shippingAddress: ShippingAddress, userId?: string) {
+  let toEmail =
+    typeof shippingAddress?.email === "string" && shippingAddress.email.trim()
+      ? shippingAddress.email.trim()
+      : null;
+  const customerName = shippingAddress?.fullName || shippingAddress?.name || "Customer";
+
+  if (!toEmail && userId) {
+    try {
+      const supabase = createAdminClient();
+      const { data } = await supabase.auth.admin.getUserById(userId);
+      if (data?.user?.email) {
+        toEmail = data.user.email;
+      }
+    } catch (err) {
+      console.warn("[email] Could not fetch user email by user_id:", err);
+    }
+  }
+
+  return { toEmail, customerName };
+}
+
+
+
 export async function createPendingStripeOrder({
   items,
   shippingAddress,
@@ -239,10 +263,11 @@ export async function createCodOrder({
   // Send confirmation email
   try {
     const { sendOrderConfirmationEmail } = await import("@/lib/email/resend");
-    const toEmail = shippingAddress?.email;
-    const customerName = shippingAddress?.fullName || shippingAddress?.name || "Customer";
+    const { toEmail, customerName } = await resolveRecipientDetails(shippingAddress, userId);
     if (toEmail) {
       await sendOrderConfirmationEmail(toEmail, customerName, orderId, total, "cod");
+    } else {
+      console.warn(`[email] ⚠️ No recipient email available for COD order #${orderId}`);
     }
   } catch (emailErr) {
     logServerError("Failed to send COD order confirmation email", emailErr, { orderId });
@@ -399,10 +424,11 @@ export async function createManualWalletOrder({
   // Send confirmation email
   try {
     const { sendOrderConfirmationEmail } = await import("@/lib/email/resend");
-    const toEmail = shippingAddress?.email;
-    const customerName = shippingAddress?.fullName || shippingAddress?.name || "Customer";
+    const { toEmail, customerName } = await resolveRecipientDetails(shippingAddress, userId);
     if (toEmail) {
       await sendOrderConfirmationEmail(toEmail, customerName, orderId, finalTotal, paymentMethod, cleanTid);
+    } else {
+      console.warn(`[email] ⚠️ No recipient email available for ${walletName} order #${orderId}`);
     }
   } catch (emailErr) {
     logServerError(`Failed to send ${walletName} order confirmation email`, emailErr, { orderId });

@@ -177,27 +177,66 @@ export async function PATCH(req: NextRequest) {
       tracking_number?: string | null;
     };
 
-    // Only send a shipped notification when the transition actually changed the state.
-    if (result.changed && result.status === "shipped" && result.tracking_number) {
+    // Send a shipped notification whenever status is shipped and tracking number is provided
+    if (result.status === "shipped" && (result.tracking_number || trackingNumber)) {
       try {
-        const address = result.shipping_address ?? {};
-        const toEmail = typeof address.email === "string" ? address.email : null;
-        const customerName =
-          typeof address.fullName === "string"
-            ? address.fullName
-            : typeof address.name === "string"
-              ? address.name
+        let address: any = result.shipping_address;
+        if (typeof address === "string") {
+          try {
+            address = JSON.parse(address);
+          } catch {
+            address = {};
+          }
+        }
+        address = address ?? {};
+        let toEmail = typeof address.email === "string" && address.email.trim() ? address.email.trim() : null;
+        let customerName =
+          typeof address.fullName === "string" && address.fullName.trim()
+            ? address.fullName.trim()
+            : typeof address.name === "string" && address.name.trim()
+              ? address.name.trim()
               : "Customer";
 
+        // Fallback: Check order table and user account if email was missing
+        if (!toEmail) {
+          const { data: orderRow } = await supabase
+            .from("orders")
+            .select("user_id, shipping_address")
+            .eq("id", orderId)
+            .single();
+
+          if (orderRow?.shipping_address) {
+            let rowAddr: any = orderRow.shipping_address;
+            if (typeof rowAddr === "string") {
+              try { rowAddr = JSON.parse(rowAddr); } catch {}
+            }
+            if (typeof rowAddr?.email === "string") toEmail = rowAddr.email.trim();
+            if (typeof rowAddr?.fullName === "string") customerName = rowAddr.fullName.trim();
+          }
+
+          if (!toEmail && orderRow?.user_id) {
+            const { data: authUser } = await supabase.auth.admin.getUserById(orderRow.user_id);
+            if (authUser?.user?.email) {
+              toEmail = authUser.user.email;
+            }
+          }
+        }
+
         if (toEmail) {
-          const { sendOrderShippedEmail } = await import("@/lib/email/resend");
-          await sendOrderShippedEmail(
-            toEmail,
-            customerName,
-            orderId,
-            result.courier || "Our Delivery Partner",
-            result.tracking_number
-          );
+          const activeCourier = result.courier || courier || "Our Delivery Partner";
+          const activeTracking = result.tracking_number || trackingNumber || "";
+          if (activeTracking) {
+            const { sendOrderShippedEmail } = await import("@/lib/email/resend");
+            await sendOrderShippedEmail(
+              toEmail,
+              customerName,
+              orderId,
+              activeCourier,
+              activeTracking
+            );
+          }
+        } else {
+          console.warn(`[email] ⚠️ Could not find recipient email for shipped order #${orderId}`);
         }
       } catch (error) {
         // The order transition has already committed. Email failure must not roll it back.

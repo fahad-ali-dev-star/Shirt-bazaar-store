@@ -7,6 +7,7 @@ import { ShieldCheck, Lock, ChevronRight, Tag, Copy, Check, Smartphone, Info } f
 import { WALLET_CONFIGS } from "@/lib/payments/wallet-config";
 import { WalletQRCode } from "@/components/wallet-qr-code";
 import { calculateShipping, FREE_SHIPPING_THRESHOLD } from "@/lib/payments/shipping";
+import { createClient } from "@/lib/supabase/client";
 
 /* ── Step indicator ── */
 function Step({ label, active, done }: { label: string; active: boolean; done: boolean }) {
@@ -108,6 +109,19 @@ function CheckoutForm() {
       setTimeout(() => setCopied(false), 2000);
     }
   }
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email) {
+        setForm((prev) => ({
+          ...prev,
+          email: prev.email || user.email || "",
+          fullName: prev.fullName || user.user_metadata?.full_name || user.user_metadata?.name || "",
+        }));
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const errParam = searchParams.get("error");
