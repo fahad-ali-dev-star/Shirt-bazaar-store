@@ -94,11 +94,21 @@ export async function sendEmail({
   if (smtp) {
     try {
       const html = await render(reactElement);
+      let text = "";
+      try {
+        text = await render(reactElement, { plainText: true });
+      } catch {
+        // Optional plain-text generation
+      }
+
+      const user = process.env.GMAIL_USER || process.env.SMTP_USER;
       const result = await smtp.sendMail({
         from: fromHeader,
         to,
+        replyTo: user || fromHeader,
         subject,
         html,
+        ...(text ? { text } : {}),
       });
       console.log(`[email] ✅ Successfully sent via Gmail SMTP to ${to} (MessageId: ${result.messageId})`);
       return { success: true, provider: "smtp", id: result.messageId };
