@@ -7,6 +7,7 @@ import { TopLoader } from "@/components/top-loader";
 import { Logo } from "@/components/logo";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { NewProductPopup } from "@/components/new-product-popup";
+import { Analytics } from "@vercel/analytics/next";
 import Link from "next/link";
 
 const inter = Inter({
@@ -156,6 +157,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
