@@ -22,6 +22,18 @@ import { logServerError } from "@/lib/api/errors";
 
 import { calculateShipping } from "@/lib/payments/shipping";
 
+// Standard preset discount mappings
+const STANDARD_CODES: Record<string, number> = {
+  SAVE20: 20,
+  SAVE15: 15,
+  SAVE10: 10,
+  WELCOME15: 15,
+  WELCOME10: 10,
+  SUMMERDROP: 25,
+  VIP20: 20,
+  FREESHIP: 10,
+};
+
 async function resolveCouponDiscount(couponCode: string | null): Promise<number> {
   if (!couponCode) return 0;
   const code = couponCode.trim().toUpperCase();
@@ -37,25 +49,22 @@ async function resolveCouponDiscount(couponCode: string | null): Promise<number>
       .maybeSingle();
 
     if (promo && promo.coupon_code && promo.coupon_code.toUpperCase() === code) {
+      if (STANDARD_CODES[code]) {
+        return STANDARD_CODES[code];
+      }
       const numberMatch = code.match(/\d+/);
-      const percent = numberMatch ? parseInt(numberMatch[0], 10) : 20;
-      return Math.min(Math.max(percent, 5), 80);
+      if (numberMatch) {
+        return Math.min(Math.max(parseInt(numberMatch[0], 10), 5), 80);
+      }
+      const msgMatch = (promo.message || "").match(/(\d+)\s*%/);
+      if (msgMatch) {
+        return Math.min(Math.max(parseInt(msgMatch[1], 10), 5), 80);
+      }
+      return 20;
     }
   } catch (err) {
     console.warn("Could not check active promo for checkout discount:", err);
   }
-
-  // NOTE: FREESHIP is intentionally NOT listed here — it only works
-  // when the admin explicitly activates it via the Offers panel.
-  const STANDARD_CODES: Record<string, number> = {
-    SAVE20: 20,
-    SAVE15: 15,
-    SAVE10: 10,
-    WELCOME15: 15,
-    WELCOME10: 10,
-    SUMMERDROP: 25,
-    VIP20: 20,
-  };
 
   if (STANDARD_CODES[code]) {
     return STANDARD_CODES[code];
@@ -126,9 +135,32 @@ export async function POST(req: NextRequest) {
 
   const discountPercent = await resolveCouponDiscount(couponCode);
 
-  // Calculate subtotal for shipping calculation
-  const rawSubtotal = normalizedItems.reduce((sum, item) => sum + (item.qty * 2000), 0);
-  const calculatedShippingFee = calculateShipping(rawSubtotal, shippingAddress.city);
+  // Calculate actual subtotal from database variant prices for shipping calculation
+  const variantIds = normalizedItems.map((i) => i.variantId);
+  const supabase = createAdminClient();
+  const { data: variants } = await supabase
+    .from("product_variants")
+    .select("id, price_override, products(base_price, is_active)")
+    .in("id", variantIds);
+
+  let actualSubtotal = 0;
+  if (variants && variants.length > 0) {
+    for (const item of normalizedItems) {
+      const v = variants.find((variant) => variant.id === item.variantId);
+      const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
+      const price = v?.price_override ?? product?.base_price ?? 2000;
+      actualSubtotal += price * item.qty;
+    }
+  } else {
+    actualSubtotal = normalizedItems.reduce((sum, item) => sum + item.qty * 2000, 0);
+  }
+
+  // Calculate discounted subtotal (matches frontend calculateShipping logic)
+  const discountedSubtotal = discountPercent > 0
+    ? Math.max(0, actualSubtotal * (1 - discountPercent / 100))
+    : actualSubtotal;
+
+  const calculatedShippingFee = calculateShipping(discountedSubtotal, shippingAddress.city);
 
   // Handle Cash on Delivery (COD)
   if (paymentMethod === "cod") {

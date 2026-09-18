@@ -114,16 +114,41 @@ export function PromoBar({ initialPromo }: PromoBarProps) {
       setTimeout(() => setCopied(false), 3000);
 
       // Auto-apply discount in Cart state
-      const numMatch = code.match(/\d+/);
-      const discountPercent = numMatch ? parseInt(numMatch[0], 10) : 20;
+      const STANDARD_PERCENTAGES: Record<string, number> = {
+        SAVE20: 20,
+        SAVE15: 15,
+        SAVE10: 10,
+        WELCOME15: 15,
+        WELCOME10: 10,
+        SUMMERDROP: 25,
+        VIP20: 20,
+        FREESHIP: 10,
+      };
+
+      const upperCode = code.toUpperCase();
+      let discountPercent = STANDARD_PERCENTAGES[upperCode] ?? 20;
+
+      if (!STANDARD_PERCENTAGES[upperCode]) {
+        const numMatch = code.match(/\d+/);
+        if (numMatch) {
+          discountPercent = parseInt(numMatch[0], 10);
+        } else {
+          const msgMatch = (promo.message || "").match(/(\d+)\s*%/);
+          if (msgMatch) {
+            discountPercent = parseInt(msgMatch[1], 10);
+          }
+        }
+      }
+
+      const safePercent = Math.min(Math.max(discountPercent, 5), 80);
 
       applyCoupon({
         code,
-        discountPercent: Math.min(Math.max(discountPercent, 5), 80),
-        description: promo.badge_text || `${discountPercent}% Off Offer`,
+        discountPercent: safePercent,
+        description: promo.badge_text || `${safePercent}% Off Offer`,
       });
 
-      setToastMessage(`🎉 Coupon "${code}" copied & applied to your cart! (${discountPercent}% OFF)`);
+      setToastMessage(`🎉 Coupon "${code}" copied & applied to your cart! (${safePercent}% OFF)`);
       setTimeout(() => setToastMessage(null), 4000);
     } catch (err) {
       console.error("Failed to copy promo code:", err);

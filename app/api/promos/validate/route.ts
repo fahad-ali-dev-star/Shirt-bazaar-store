@@ -14,6 +14,7 @@ const STANDARD_CODES: Record<string, { percent: number; desc: string }> = {
   WELCOME10: { percent: 10, desc: "10% New Customer Welcome" },
   SUMMERDROP: { percent: 25, desc: "25% Summer Drop Exclusive" },
   VIP20: { percent: 20, desc: "20% VIP Member Discount" },
+  FREESHIP: { percent: 10, desc: "Free Express Shipping Discount" },
 };
 
 export async function POST(req: Request) {
@@ -39,15 +40,28 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (promo && promo.coupon_code && promo.coupon_code.toUpperCase() === code) {
-        // Extract percentage from code if contains number (e.g., SAVE25 -> 25) or default to 20
-        const numberMatch = code.match(/\d+/);
-        const percent = numberMatch ? parseInt(numberMatch[0], 10) : 20;
+        let percent = 20;
+        if (STANDARD_CODES[code]) {
+          percent = STANDARD_CODES[code].percent;
+        } else {
+          const numberMatch = code.match(/\d+/);
+          if (numberMatch) {
+            percent = parseInt(numberMatch[0], 10);
+          } else {
+            const msgMatch = (promo.message || "").match(/(\d+)\s*%/);
+            if (msgMatch) {
+              percent = parseInt(msgMatch[1], 10);
+            }
+          }
+        }
+
+        const safePercent = Math.min(Math.max(percent, 5), 80);
 
         return NextResponse.json({
           valid: true,
           code: promo.coupon_code.toUpperCase(),
-          discountPercent: Math.min(Math.max(percent, 5), 80),
-          description: promo.badge_text || `${percent}% Off Storewide Promo`,
+          discountPercent: safePercent,
+          description: promo.badge_text || STANDARD_CODES[code]?.desc || `${safePercent}% Off Storewide Promo`,
         });
       }
     } catch (err) {
