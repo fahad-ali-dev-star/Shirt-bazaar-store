@@ -79,7 +79,9 @@ export function PromoBar({ initialPromo }: PromoBarProps) {
         const res = await fetch("/api/promos", { cache: "no-store" });
         if (res.ok) {
           const json = await res.json();
-          if (json.promo && json.promo.is_active) {
+          if (json.alreadyClaimed) {
+            setPromo(null);
+          } else if (json.promo && json.promo.is_active) {
             setPromo(json.promo);
           } else {
             setPromo(null);

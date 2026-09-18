@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/admin";
+import { hasUserClaimedOffer } from "@/lib/payments/offers";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,33 @@ export async function POST(req: Request) {
     }
 
     const code = rawCode.trim().toUpperCase();
+
+    // ── Check if user has already redeemed an offer previously (One-time claim rule) ──
+    try {
+      const { user } = await requireUser();
+      const email = body?.email || user?.email;
+      const phone = body?.phone;
+
+      if (user || email || phone) {
+        const claimCheck = await hasUserClaimedOffer({
+          userId: user?.id,
+          email: email,
+          phone: phone,
+        });
+
+        if (claimCheck.hasClaimed) {
+          return NextResponse.json(
+            {
+              valid: false,
+              error: "You have already redeemed a promotional offer on a previous order. Promotional offers are strictly one-time per customer.",
+            },
+            { status: 400 }
+          );
+        }
+      }
+    } catch {
+      // Continue if auth check error
+    }
 
     // 1. Check live active promo from database
     try {

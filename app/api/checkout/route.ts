@@ -21,6 +21,7 @@ import {
 import { logServerError } from "@/lib/api/errors";
 
 import { calculateShipping } from "@/lib/payments/shipping";
+import { hasUserClaimedOffer } from "@/lib/payments/offers";
 
 // Standard preset discount mappings
 const STANDARD_CODES: Record<string, number> = {
@@ -132,6 +133,24 @@ export async function POST(req: NextRequest) {
   const shippingAddress = shippingResult.value;
   const paymentMethod = methodResult.value;
   const couponCode = couponResult.value;
+
+  // ── One-Time Offer Redemption Enforcement ──
+  if (couponCode) {
+    const claimCheck = await hasUserClaimedOffer({
+      userId: user.id,
+      email: shippingAddress.email || user.email,
+      phone: shippingAddress.phone,
+    });
+
+    if (claimCheck.hasClaimed) {
+      return NextResponse.json(
+        {
+          error: "You have already redeemed a promotional offer on a previous order. Promotional offers are strictly one-time per customer.",
+        },
+        { status: 400 }
+      );
+    }
+  }
 
   const discountPercent = await resolveCouponDiscount(couponCode);
 
@@ -267,11 +286,20 @@ export async function POST(req: NextRequest) {
     }
     orderFinalTotal += calculatedShippingFee;
 
+    let stripePaymentRef = `Stripe-${Date.now()}-${user.id.slice(0, 8)}`;
+    if (couponCode) {
+      stripePaymentRef += ` [${couponCode}]`;
+    }
+    if (calculatedShippingFee > 0) {
+      stripePaymentRef += ` | Ship: Rs ${calculatedShippingFee}`;
+    }
+
     const supabase = createAdminClient();
     await supabase
       .from("orders")
       .update({
         total: orderFinalTotal,
+        payment_reference: stripePaymentRef,
       })
       .eq("id", orderId);
 
