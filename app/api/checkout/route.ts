@@ -50,6 +50,9 @@ async function resolveCouponDiscount(couponCode: string | null): Promise<number>
       .maybeSingle();
 
     if (promo && promo.coupon_code && promo.coupon_code.toUpperCase() === code) {
+      if (typeof promo.discount_percent === "number" && promo.discount_percent > 0) {
+        return Math.min(Math.max(promo.discount_percent, 1), 80);
+      }
       if (STANDARD_CODES[code]) {
         return STANDARD_CODES[code];
       }

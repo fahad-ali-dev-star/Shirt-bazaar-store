@@ -2,7 +2,7 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight, ShieldCheck, RotateCcw, Truck, Star, Sparkles } from "lucide-react";
+import { ChevronRight, ShieldCheck, RotateCcw, Truck, Star, Sparkles, Tag, Zap } from "lucide-react";
 import { AddToCartForm } from "./add-to-cart-form";
 import { ProductImageGallery } from "./gallery";
 import { WishlistButton } from "@/components/wishlist-button";
@@ -167,6 +167,26 @@ export default async function ProductPage({ params }: Props) {
                 {product.description}
               </p>
             )}
+
+            {/* Promotional Offer Perks Callout */}
+            <div className="mb-4 rounded-xl bg-linear-to-r from-amber-500/10 via-brand-500/10 to-purple-500/10 border border-amber-500/20 p-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-xs">
+                  <Zap size={12} className="fill-current" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-900 truncate">
+                    Special Offer Available
+                  </p>
+                  <p className="text-[11px] text-slate-600 truncate">
+                    1-time promotional discount & free delivery on orders Rs 3,000+
+                  </p>
+                </div>
+              </div>
+              <span className="shrink-0 rounded-lg bg-white/80 px-2 py-0.5 text-[10px] font-bold text-brand-700 uppercase tracking-wider border border-brand-200">
+                At Checkout
+              </span>
+            </div>
 
             {/* Add to cart */}
             <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-2xs">

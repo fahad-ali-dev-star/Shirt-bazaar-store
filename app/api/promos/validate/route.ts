@@ -70,7 +70,9 @@ export async function POST(req: Request) {
 
       if (promo && promo.coupon_code && promo.coupon_code.toUpperCase() === code) {
         let percent = 20;
-        if (STANDARD_CODES[code]) {
+        if (typeof promo.discount_percent === "number" && promo.discount_percent > 0) {
+          percent = promo.discount_percent;
+        } else if (STANDARD_CODES[code]) {
           percent = STANDARD_CODES[code].percent;
         } else {
           const numberMatch = code.match(/\d+/);

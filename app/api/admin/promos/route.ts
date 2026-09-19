@@ -185,11 +185,15 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Promo message is required" }, { status: 400 });
     }
 
-    const payload = {
+    const rawDiscount = typeof body.discount_percent === "number" ? body.discount_percent : 20;
+    const discountPercent = Math.min(Math.max(rawDiscount, 1), 80);
+
+    const payload: Record<string, any> = {
       is_active: typeof is_active === "boolean" ? is_active : true,
       badge_text: badge_text?.trim() || null,
       message: message.trim(),
       coupon_code: coupon_code?.trim() ? coupon_code.trim().toUpperCase() : null,
+      discount_percent: discountPercent,
       cta_text: cta_text?.trim() || null,
       cta_link: cta_link?.trim() || "/#products",
       theme: ["dark", "brand", "emerald", "amber", "purple", "crimson"].includes(theme)
@@ -208,6 +212,16 @@ export async function PUT(req: Request) {
         .select()
         .maybeSingle();
 
+      if (result.error && result.error.message?.includes("discount_percent")) {
+        delete payload.discount_percent;
+        result = await (supabase as any)
+          .from("store_promos")
+          .update(payload)
+          .eq("id", id)
+          .select()
+          .maybeSingle();
+      }
+
       if (!result.error && !result.data) {
         result = await (supabase as any)
           .from("store_promos")
@@ -221,6 +235,15 @@ export async function PUT(req: Request) {
         .insert(payload)
         .select()
         .single();
+
+      if (result.error && result.error.message?.includes("discount_percent")) {
+        delete payload.discount_percent;
+        result = await (supabase as any)
+          .from("store_promos")
+          .insert(payload)
+          .select()
+          .single();
+      }
     }
 
     if (result.error) {

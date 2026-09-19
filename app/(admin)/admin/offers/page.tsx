@@ -35,6 +35,7 @@ interface PromoConfig {
   badge_text: string;
   message: string;
   coupon_code: string;
+  discount_percent: number;
   cta_text: string;
   cta_link: string;
   theme: "dark" | "brand" | "emerald" | "amber" | "purple" | "crimson";
@@ -73,6 +74,7 @@ const CAMPAIGN_PRESETS = [
     badge: "FLASH SALE ⚡",
     message: "Get 20% off all heavyweight cotton shirts this week!",
     code: "SAVE20",
+    discount_percent: 20,
     cta_text: "Shop Sale",
     cta_link: "/#products",
     theme: "amber" as const,
@@ -83,6 +85,7 @@ const CAMPAIGN_PRESETS = [
     badge: "FREE SHIPPING 🚚",
     message: "Enjoy free express shipping on all orders over Rs 3,000!",
     code: "FREESHIP",
+    discount_percent: 10,
     cta_text: "Explore Catalog",
     cta_link: "/#products",
     theme: "emerald" as const,
@@ -93,6 +96,7 @@ const CAMPAIGN_PRESETS = [
     badge: "WELCOME OFFER 🎉",
     message: "Welcome to FHD Store! Take 15% off your first checkout.",
     code: "WELCOME15",
+    discount_percent: 15,
     cta_text: "Claim 15%",
     cta_link: "/#products",
     theme: "brand" as const,
@@ -103,6 +107,7 @@ const CAMPAIGN_PRESETS = [
     badge: "EXCLUSIVE DROP 🔥",
     message: "Summer 2026 limited drop now live! 25% off today only.",
     code: "SUMMERDROP",
+    discount_percent: 25,
     cta_text: "View Collection",
     cta_link: "/#products",
     theme: "crimson" as const,
@@ -162,6 +167,7 @@ export default function AdminOffersPage() {
     badge_text: "FLASH SALE ⚡",
     message: "Enjoy 20% OFF all premium shirts this week only!",
     coupon_code: "SAVE20",
+    discount_percent: 20,
     cta_text: "Claim Discount",
     cta_link: "/#products",
     theme: "amber",
@@ -180,6 +186,7 @@ export default function AdminOffersPage() {
             badge_text: json.promo.badge_text || "",
             message: json.promo.message || "",
             coupon_code: json.promo.coupon_code || "",
+            discount_percent: json.promo.discount_percent ?? (json.promo.coupon_code?.match(/\d+/) ? parseInt(json.promo.coupon_code.match(/\d+/)[0], 10) : 20),
             cta_text: json.promo.cta_text || "",
             cta_link: json.promo.cta_link || "/#products",
             theme: json.promo.theme || "dark",
@@ -274,6 +281,7 @@ export default function AdminOffersPage() {
       badge_text: preset.badge,
       message: preset.message,
       coupon_code: preset.code,
+      discount_percent: preset.discount_percent,
       cta_text: preset.cta_text,
       cta_link: preset.cta_link,
       theme: preset.theme,
@@ -781,7 +789,7 @@ export default function AdminOffersPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 pt-2">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
                     Coupon Code (Optional)
@@ -793,7 +801,25 @@ export default function AdminOffersPage() {
                     placeholder="SAVE20"
                     className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono font-bold uppercase text-slate-900 focus:border-black focus:outline-none"
                   />
-                  <span className="text-[11px] text-slate-400 mt-1 block">Customers can 1-click copy this code.</span>
+                  <span className="text-[11px] text-slate-400 mt-1 block">1-click copy for shoppers</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Discount Rate (%)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={80}
+                      value={form.discount_percent || 20}
+                      onChange={(e) => setForm((p) => ({ ...p, discount_percent: Math.min(Math.max(Number(e.target.value) || 1, 1), 80) }))}
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:border-black focus:outline-none"
+                    />
+                    <span className="text-sm font-bold text-slate-500">%</span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 mt-1 block">Applied to cart subtotal</span>
                 </div>
 
                 <div>

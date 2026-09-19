@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useCart } from "@/lib/store/cart";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, Lock, ChevronRight, Tag, Copy, Check, Smartphone, Info } from "lucide-react";
+import { ShieldCheck, Lock, ChevronRight, Tag, Copy, Check, Smartphone, Info, Loader2, X } from "lucide-react";
 import { WALLET_CONFIGS } from "@/lib/payments/wallet-config";
 import { WalletQRCode } from "@/components/wallet-qr-code";
 import { calculateShipping, FREE_SHIPPING_THRESHOLD } from "@/lib/payments/shipping";
@@ -76,7 +76,7 @@ const POPULAR_CITIES = [
 ];
 
 function CheckoutForm() {
-  const { items, subtotal, discountAmount, discountedTotal, appliedCoupon } = useCart();
+  const { items, subtotal, discountAmount, discountedTotal, appliedCoupon, applyCoupon, removeCoupon } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -85,6 +85,12 @@ function CheckoutForm() {
   const [transactionId, setTransactionId] = useState("");
   const [senderPhone, setSenderPhone] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Coupon manager state on checkout
+  const [couponInput, setCouponInput] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     fullName: "",
@@ -101,6 +107,44 @@ function CheckoutForm() {
   const shippingFee = calculateShipping(rawDiscounted, form.city);
   const grandTotal = rawDiscounted + shippingFee;
   const freeShippingDifference = Math.max(0, FREE_SHIPPING_THRESHOLD - rawDiscounted);
+
+  async function handleApplyCoupon() {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+
+    try {
+      const res = await fetch("/api/promos/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponInput.trim(),
+          email: form.email.trim() || undefined,
+          phone: form.phone.trim() || undefined,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.valid) {
+        setCouponError(json.error || "Invalid or expired promo code.");
+      } else {
+        applyCoupon({
+          code: json.code,
+          discountPercent: json.discountPercent,
+          description: json.description,
+        });
+        setCouponSuccess(`✓ Coupon "${json.code}" applied! (${json.discountPercent}% OFF)`);
+        setCouponInput("");
+        setError(null);
+      }
+    } catch {
+      setCouponError("Could not validate coupon. Please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  }
 
   function handleCopyAccount(accountNumber: string) {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -217,6 +261,9 @@ function CheckoutForm() {
         if (res.status === 401) {
           router.push(`/login?next=/checkout`);
           return;
+        }
+        if (data.error?.toLowerCase().includes("promotional offer") || data.error?.toLowerCase().includes("coupon")) {
+          removeCoupon();
         }
         setError(data.error ?? "Something went wrong. Please try again.");
         setLoading(false);
@@ -662,6 +709,70 @@ function CheckoutForm() {
                 </li>
               ))}
             </ul>
+
+            {/* Promo Code Input / Applied Badge */}
+            <div className="mb-4 pb-4 border-b border-slate-100">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <Check size={14} className="text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="text-xs font-bold text-emerald-800 font-mono tracking-wider">
+                        {appliedCoupon.code}
+                      </span>
+                      <p className="text-[10px] text-emerald-600">
+                        {appliedCoupon.description || `${appliedCoupon.discountPercent}% Off Applied`}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="p-1 rounded-lg text-emerald-400 hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                    title="Remove coupon"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        setCouponError(null);
+                        setCouponSuccess(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCoupon();
+                        }
+                      }}
+                      placeholder="Promo / Voucher code"
+                      className="flex-1 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-mono font-semibold uppercase text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-200 min-w-0 bg-slate-50/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading || !couponInput.trim()}
+                      className="shrink-0 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      {couponLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+                      Apply
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="mt-1.5 text-[11px] text-red-600 font-medium leading-tight">{couponError}</p>
+                  )}
+                  {couponSuccess && (
+                    <p className="mt-1.5 text-[11px] text-emerald-600 font-semibold leading-tight">{couponSuccess}</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Price Breakdown */}
             <div className="space-y-2 text-xs sm:text-sm mb-5">
