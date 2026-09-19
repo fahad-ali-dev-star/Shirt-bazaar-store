@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -16,6 +16,9 @@ import {
   Layers,
   Clock,
   Eye,
+  Upload,
+  Link2,
+  X,
 } from "lucide-react";
 
 interface BannerConfig {
@@ -72,6 +75,13 @@ export default function AdminBannerPage() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Image input mode per banner tab: "url" | "upload"
+  const [imgMode, setImgMode] = useState<"url" | "upload">("url");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Live preview carousel state
   const [previewIndex, setPreviewIndex] = useState<number>(0);
@@ -160,6 +170,37 @@ export default function AdminBannerPage() {
 
     setBanners((prev) => prev.filter((_, idx) => idx !== index));
     setActiveTab((prev) => Math.max(0, prev >= index ? prev - 1 : prev));
+  }
+
+  async function handleFileUpload(file: File) {
+    setUploadError(null);
+
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      setUploadError("Only JPEG, PNG, and WebP images are allowed.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setUploadError("File too large. Max size is 8 MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/admin/banner/upload", {
+        method: "POST",
+        body: form,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      updateCurrentBanner({ image_url: json.url });
+    } catch (err: unknown) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -358,34 +399,148 @@ export default function AdminBannerPage() {
                 </label>
               </div>
 
-              {/* Image URL & Quick Presets */}
-              <div className="pt-3 border-t border-slate-100">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Background Image URL <span className="text-red-500">*</span>
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={currentBanner.image_url}
-                  onChange={(e) => updateCurrentBanner({ image_url: e.target.value })}
-                  placeholder="/hero_banner.png or https://images.unsplash.com/..."
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-900 font-mono focus:border-black focus:outline-none"
-                />
-
-                {/* Quick presets */}
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  <span className="text-[11px] font-semibold text-slate-400 self-center">Presets:</span>
-                  {PRESET_BANNERS.map((preset) => (
+              {/* Image Source: Upload or URL */}
+              <div className="pt-3 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700">
+                    Background Image <span className="text-red-500">*</span>
+                  </label>
+                  {/* Mode toggle */}
+                  <div className="flex rounded-xl border border-slate-200 overflow-hidden text-[11px] font-semibold">
                     <button
-                      key={preset.label}
                       type="button"
-                      onClick={() => updateCurrentBanner({ image_url: preset.url })}
-                      className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-200 transition"
+                      onClick={() => { setImgMode("upload"); setUploadError(null); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 transition ${
+                        imgMode === "upload"
+                          ? "bg-slate-900 text-white"
+                          : "bg-white text-slate-500 hover:bg-slate-50"
+                      }`}
                     >
-                      {preset.label}
+                      <Upload size={11} />
+                      Upload File
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={() => { setImgMode("url"); setUploadError(null); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 transition border-l border-slate-200 ${
+                        imgMode === "url"
+                          ? "bg-slate-900 text-white"
+                          : "bg-white text-slate-500 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Link2 size={11} />
+                      Enter URL
+                    </button>
+                  </div>
                 </div>
+
+                {/* ── Upload Mode ── */}
+                {imgMode === "upload" && (
+                  <div className="space-y-2">
+                    {/* Current image thumbnail */}
+                    {currentBanner.image_url && (
+                      <div className="relative w-full h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                        <Image
+                          src={currentBanner.image_url}
+                          alt="Banner preview"
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateCurrentBanner({ image_url: "" })}
+                          className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 transition"
+                          title="Remove image"
+                        >
+                          <X size={12} />
+                        </button>
+                        <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
+                          Current Image
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Drop zone */}
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragOver(false);
+                        const file = e.dataTransfer.files[0];
+                        if (file) handleFileUpload(file);
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed cursor-pointer transition py-6 px-4 ${
+                        dragOver
+                          ? "border-brand-500 bg-brand-50/50"
+                          : "border-slate-300 hover:border-slate-400 bg-slate-50/50 hover:bg-slate-100/50"
+                      }`}
+                    >
+                      {uploading ? (
+                        <>
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+                          <span className="text-xs text-slate-500 font-medium">Uploading…</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={20} className="text-slate-400" />
+                          <div className="text-center">
+                            <p className="text-xs font-semibold text-slate-700">
+                              Drop image here or <span className="text-brand-600 underline underline-offset-2">browse</span>
+                            </p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">JPEG, PNG, WebP · Max 8 MB</p>
+                          </div>
+                        </>
+                      )}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="sr-only"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </div>
+
+                    {uploadError && (
+                      <p className="text-[11px] text-red-600 font-semibold">{uploadError}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* ── URL Mode ── */}
+                {imgMode === "url" && (
+                  <div className="space-y-2">
+                    <input
+                      required
+                      type="text"
+                      value={currentBanner.image_url}
+                      onChange={(e) => updateCurrentBanner({ image_url: e.target.value })}
+                      placeholder="/hero_banner.png or https://images.unsplash.com/..."
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-slate-900 font-mono focus:border-black focus:outline-none"
+                    />
+
+                    {/* Quick presets */}
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <span className="text-[11px] font-semibold text-slate-400">Presets:</span>
+                      {PRESET_BANNERS.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => updateCurrentBanner({ image_url: preset.url })}
+                          className="rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-200 transition"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
