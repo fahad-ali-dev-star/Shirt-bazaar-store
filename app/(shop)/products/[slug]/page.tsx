@@ -10,6 +10,7 @@ import { ProductReviews } from "@/components/reviews/product-reviews";
 import type { Metadata } from "next";
 
 import { getCachedProductBySlug, getCachedHomeProducts } from "@/lib/supabase/cached-queries";
+import { getEffectivePrice, getSavingsAmount } from "@/lib/pricing";
 
 export const revalidate = 3600;
 
@@ -64,6 +65,9 @@ export default async function ProductPage({ params }: Props) {
     price_override: number | null;
   }[];
   const totalStock = rawVariants.reduce((s, v) => s + v.stock_qty, 0);
+  const hasDiscount = (product.discount_percent || 0) > 0;
+  const effectivePrice = getEffectivePrice(product.base_price, product.discount_percent);
+  const savingsAmount = getSavingsAmount(product.base_price, product.discount_percent);
 
   // Fetch related products (from cached catalog for instant speed)
   const allHomeProducts = await getCachedHomeProducts();
@@ -118,7 +122,8 @@ export default async function ProductPage({ params }: Props) {
                     productId: product.id,
                     name: product.name,
                     slug: product.slug,
-                    basePrice: Number(product.base_price),
+                    basePrice: product.base_price,
+                    discountPercent: product.discount_percent || 0,
                     image: images?.[0]?.url,
                     category: product.category,
                   }}
@@ -152,10 +157,31 @@ export default async function ProductPage({ params }: Props) {
               </span>
             </a>
 
-            {/* Price */}
-            <div className="mt-4 sm:mt-5 flex items-baseline gap-2">
-              <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">Rs {Number(product.base_price).toLocaleString()}</span>
-              <span className="text-xs sm:text-sm text-slate-400 font-medium">/ piece</span>
+            {/* Price & Discount */}
+            <div className="mt-4 sm:mt-5">
+              {hasDiscount ? (
+                <div className="flex flex-wrap items-baseline gap-2.5 sm:gap-3">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-950">
+                    Rs {effectivePrice.toLocaleString()}
+                  </span>
+                  <span className="text-base sm:text-lg text-slate-400 line-through">
+                    Rs {Number(product.base_price).toLocaleString()}
+                  </span>
+                  <span className="rounded-full bg-red-600 text-white font-extrabold text-xs px-2.5 py-0.5 shadow-xs">
+                    -{product.discount_percent}% OFF
+                  </span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    Save Rs {savingsAmount.toLocaleString()}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-slate-950">
+                    Rs {Number(product.base_price).toLocaleString()}
+                  </span>
+                  <span className="text-xs sm:text-sm text-slate-400 font-medium">/ piece</span>
+                </div>
+              )}
             </div>
 
             {/* Divider */}
@@ -192,7 +218,8 @@ export default async function ProductPage({ params }: Props) {
             <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-2xs">
               <AddToCartForm
                 productName={product.name}
-                basePrice={product.base_price}
+                basePrice={effectivePrice}
+                discountPercent={product.discount_percent || 0}
                 variants={rawVariants}
                 image={images?.[0]?.url}
               />
@@ -255,6 +282,8 @@ export default async function ProductPage({ params }: Props) {
                   (best, image) => (!best || image.position < best.position ? image : best),
                   null
                 );
+                const pEffectivePrice = getEffectivePrice(p.base_price, p.discount_percent);
+                const pHasDiscount = (p.discount_percent || 0) > 0;
 
                 return (
                   <Link
@@ -276,9 +305,17 @@ export default async function ProductPage({ params }: Props) {
                           👕
                         </div>
                       )}
+                      {pHasDiscount && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-500 text-white shadow-sm tracking-tight">
+                            <Zap size={10} className="fill-white" />
+                            -{p.discount_percent}% OFF
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    <div className="p-2.5 sm:p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 sm:gap-2">
-                      <div className="min-w-0 w-full sm:w-auto">
+                    <div className="p-2.5 sm:p-4 bg-white border-t border-slate-100 flex flex-col justify-between gap-1 sm:gap-2">
+                      <div className="min-w-0 w-full">
                         <h3 className="font-semibold text-xs sm:text-sm text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
                           {p.name}
                         </h3>
@@ -286,9 +323,16 @@ export default async function ProductPage({ params }: Props) {
                           {p.category || "Premium Cotton"}
                         </p>
                       </div>
-                      <p className="font-bold text-xs sm:text-sm text-slate-900 shrink-0 self-end sm:self-auto">
-                        Rs {Number(p.base_price).toLocaleString()}
-                      </p>
+                      <div className="flex items-baseline gap-1.5 flex-wrap">
+                        <span className="font-bold text-xs sm:text-sm text-slate-900">
+                          Rs {pEffectivePrice.toLocaleString()}
+                        </span>
+                        {pHasDiscount && (
+                          <span className="text-[11px] text-slate-400 line-through">
+                            Rs {Number(p.base_price).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </Link>
                 );

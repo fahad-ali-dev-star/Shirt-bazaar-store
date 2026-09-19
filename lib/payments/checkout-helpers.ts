@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/server";
 import { logServerError } from "@/lib/api/errors";
+import { getEffectivePrice } from "@/lib/pricing";
 
 type CheckoutItem = { variantId: string; qty: number };
 type ShippingAddress = {
@@ -168,7 +169,7 @@ export async function createCodOrder({
   const variantIds = items.map((i) => i.variantId);
   const { data: variants, error: varError } = await supabase
     .from("product_variants")
-    .select("id, stock_qty, price_override, products(name, base_price, is_active)")
+    .select("id, stock_qty, price_override, products(name, base_price, discount_percent, is_active)")
     .in("id", variantIds);
 
   if (varError || !variants || variants.length !== items.length) {
@@ -178,14 +179,20 @@ export async function createCodOrder({
   let calculatedTotal = 0;
   for (const item of items) {
     const v = variants.find((variant) => variant.id === item.variantId);
-    const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
+    const product = (Array.isArray(v?.products) ? v?.products[0] : v?.products) as {
+      name: string;
+      base_price: number;
+      discount_percent?: number;
+      is_active: boolean;
+    } | undefined;
     if (!v || !product || !product.is_active) {
       throw new Error("One or more products are unavailable");
     }
     if (v.stock_qty < item.qty) {
       throw new Error("One or more items are out of stock");
     }
-    const price = v.price_override ?? product.base_price;
+    const baseItemPrice = v.price_override ?? product.base_price;
+    const price = getEffectivePrice(baseItemPrice, product.discount_percent);
     calculatedTotal += price * item.qty;
   }
 
@@ -232,8 +239,14 @@ export async function createCodOrder({
 
   const orderItems = items.map((item) => {
     const v = variants.find((variant) => variant.id === item.variantId);
-    const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
-    const price = v?.price_override ?? product?.base_price ?? 0;
+    const product = (Array.isArray(v?.products) ? v?.products[0] : v?.products) as {
+      name: string;
+      base_price: number;
+      discount_percent?: number;
+      is_active: boolean;
+    } | undefined;
+    const baseItemPrice = v?.price_override ?? product?.base_price ?? 0;
+    const price = getEffectivePrice(baseItemPrice, product?.discount_percent);
     return {
       order_id: orderId,
       variant_id: item.variantId,
@@ -326,7 +339,7 @@ export async function createManualWalletOrder({
   const variantIds = items.map((i) => i.variantId);
   const { data: variants, error: varError } = await supabase
     .from("product_variants")
-    .select("id, stock_qty, price_override, products(name, base_price, is_active)")
+    .select("id, stock_qty, price_override, products(name, base_price, discount_percent, is_active)")
     .in("id", variantIds);
 
   if (varError || !variants || variants.length !== items.length) {
@@ -336,14 +349,20 @@ export async function createManualWalletOrder({
   let calculatedTotal = 0;
   for (const item of items) {
     const v = variants.find((variant) => variant.id === item.variantId);
-    const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
+    const product = (Array.isArray(v?.products) ? v?.products[0] : v?.products) as {
+      name: string;
+      base_price: number;
+      discount_percent?: number;
+      is_active: boolean;
+    } | undefined;
     if (!v || !product || !product.is_active) {
       throw new Error("One or more products are unavailable");
     }
     if (v.stock_qty < item.qty) {
       throw new Error("One or more items are out of stock");
     }
-    const price = v.price_override ?? product.base_price;
+    const baseItemPrice = v.price_override ?? product.base_price;
+    const price = getEffectivePrice(baseItemPrice, product.discount_percent);
     calculatedTotal += price * item.qty;
   }
 
@@ -393,8 +412,14 @@ export async function createManualWalletOrder({
 
   const orderItems = items.map((item) => {
     const v = variants.find((variant) => variant.id === item.variantId);
-    const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
-    const price = v?.price_override ?? product?.base_price ?? 0;
+    const product = (Array.isArray(v?.products) ? v?.products[0] : v?.products) as {
+      name: string;
+      base_price: number;
+      discount_percent?: number;
+      is_active: boolean;
+    } | undefined;
+    const baseItemPrice = v?.price_override ?? product?.base_price ?? 0;
+    const price = getEffectivePrice(baseItemPrice, product?.discount_percent);
     return {
       order_id: orderId,
       variant_id: item.variantId,

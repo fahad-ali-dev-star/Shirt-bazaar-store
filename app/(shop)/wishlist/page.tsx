@@ -3,8 +3,9 @@
 import { useWishlist } from "@/lib/store/wishlist";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Trash2, ArrowRight, ArrowLeft, ShoppingBag } from "lucide-react";
+import { Heart, Trash2, ArrowRight, ArrowLeft, ShoppingBag, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getEffectivePrice } from "@/lib/pricing";
 
 export default function WishlistPage() {
   const { items, removeItem, clear } = useWishlist();
@@ -77,7 +78,11 @@ export default function WishlistPage() {
 
       {/* Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-        {items.map((item) => (
+          {items.map((item) => {
+            const hasDiscount = (item.discountPercent || 0) > 0;
+            const effectivePrice = getEffectivePrice(item.basePrice, item.discountPercent);
+
+            return (
           <div
             key={item.productId}
             className="group flex flex-col rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-xs card-hover relative"
@@ -90,6 +95,16 @@ export default function WishlistPage() {
             >
               <Trash2 size={15} />
             </button>
+
+            {/* Discount badge */}
+            {hasDiscount && (
+              <div className="absolute top-2.5 left-2.5 z-10">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-500 text-white shadow-sm tracking-tight">
+                  <Zap size={9} className="fill-white" />
+                  -{item.discountPercent}% OFF
+                </span>
+              </div>
+            )}
 
             {/* Image Link */}
             <Link href={`/products/${item.slug}`} className="relative aspect-[4/5] overflow-hidden bg-slate-100">
@@ -122,9 +137,16 @@ export default function WishlistPage() {
               </div>
 
               <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                <span className="font-bold text-xs sm:text-sm text-slate-900">
-                  Rs {Number(item.basePrice).toLocaleString()}
-                </span>
+                <div className="flex items-baseline gap-1.5 flex-wrap">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900">
+                    Rs {effectivePrice.toLocaleString()}
+                  </span>
+                  {hasDiscount && (
+                    <span className="text-[11px] text-slate-400 line-through">
+                      Rs {Number(item.basePrice).toLocaleString()}
+                    </span>
+                  )}
+                </div>
                 <Link
                   href={`/products/${item.slug}`}
                   className="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600 transition-colors shadow-2xs"
@@ -135,7 +157,8 @@ export default function WishlistPage() {
               </div>
             </div>
           </div>
-        ))}
+            );
+          })}
       </div>
     </main>
   );

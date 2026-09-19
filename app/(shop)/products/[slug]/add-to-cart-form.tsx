@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { ShoppingBag, Sparkles, Check, ArrowRight } from "lucide-react";
 import { SizeAdvisorModal } from "./size-advisor-modal";
 
+import { getEffectivePrice } from "@/lib/pricing";
+
 type Variant = {
   id: string;
   size: string;
@@ -17,11 +19,13 @@ type Variant = {
 export function AddToCartForm({
   productName,
   basePrice,
+  discountPercent = 0,
   variants,
   image,
 }: {
   productName: string;
   basePrice: number;
+  discountPercent?: number;
   variants: Variant[];
   image?: string;
 }) {
@@ -45,12 +49,16 @@ export function AddToCartForm({
 
   function handleAdd() {
     if (!selected) return;
+    const itemPrice = selected.price_override
+      ? (discountPercent > 0 ? getEffectivePrice(selected.price_override, discountPercent) : selected.price_override)
+      : basePrice;
+
     addItem({
       variantId: selected.id,
       productName,
       size: selected.size,
       color: selected.color,
-      price: selected.price_override ?? basePrice,
+      price: itemPrice,
       qty: 1,
       image,
       stockQty: selected.stock_qty,

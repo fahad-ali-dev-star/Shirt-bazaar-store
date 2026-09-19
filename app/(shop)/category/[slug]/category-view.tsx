@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SlidersHorizontal, ArrowUpDown, Sparkles, ShoppingBag } from "lucide-react";
 import { WishlistButton } from "@/components/wishlist-button";
+import { getEffectivePrice } from "@/lib/pricing";
 import type { HomeProductItem } from "@/lib/supabase/cached-queries";
 
 export function CategoryView({
@@ -20,20 +21,23 @@ export function CategoryView({
   const filteredProducts = useMemo(() => {
     let list = [...products];
 
-    // Filter by price range
+    // Filter by effective selling price range
     if (priceFilter === "under2500") {
-      list = list.filter((p) => Number(p.base_price) < 2500);
+      list = list.filter((p) => getEffectivePrice(p.base_price, p.discount_percent) < 2500);
     } else if (priceFilter === "2500to3500") {
-      list = list.filter((p) => Number(p.base_price) >= 2500 && Number(p.base_price) <= 3500);
+      list = list.filter((p) => {
+        const price = getEffectivePrice(p.base_price, p.discount_percent);
+        return price >= 2500 && price <= 3500;
+      });
     } else if (priceFilter === "above3500") {
-      list = list.filter((p) => Number(p.base_price) > 3500);
+      list = list.filter((p) => getEffectivePrice(p.base_price, p.discount_percent) > 3500);
     }
 
     // Sort
     if (sortBy === "price-asc") {
-      list.sort((a, b) => Number(a.base_price) - Number(b.base_price));
+      list.sort((a, b) => getEffectivePrice(a.base_price, a.discount_percent) - getEffectivePrice(b.base_price, b.discount_percent));
     } else if (sortBy === "price-desc") {
-      list.sort((a, b) => Number(b.base_price) - Number(a.base_price));
+      list.sort((a, b) => getEffectivePrice(b.base_price, b.discount_percent) - getEffectivePrice(a.base_price, a.discount_percent));
     }
 
     return list;
@@ -105,6 +109,8 @@ export function CategoryView({
               (best, image) => (!best || image.position < best.position ? image : best),
               null
             );
+            const hasDiscount = (p.discount_percent || 0) > 0;
+            const effectivePrice = getEffectivePrice(p.base_price, p.discount_percent);
 
             return (
               <div
@@ -112,14 +118,23 @@ export function CategoryView({
                 className="group flex flex-col animate-slide-up card-hover rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-slate-100 shadow-xs relative"
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
-                {/* Wishlist Button (Top Right) */}
+                {/* Badges (Top Left) */}
+                {hasDiscount && (
+                  <div className="absolute top-2.5 left-2.5 z-10">
+                    <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider bg-red-600 text-white shadow-xs">
+                      -{p.discount_percent}% OFF
+                    </span>
+                  </div>
+                )}
+
                 <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-10">
                   <WishlistButton
                     item={{
                       productId: p.id,
                       name: p.name,
                       slug: p.slug,
-                      basePrice: Number(p.base_price),
+                      basePrice: p.base_price,
+                      discountPercent: p.discount_percent || 0,
                       image: cover?.url,
                       category: p.category || categoryTitle,
                     }}
@@ -162,9 +177,21 @@ export function CategoryView({
                     </Link>
                     <p className="mt-0.5 text-[11px] sm:text-xs text-slate-400 capitalize">{categoryTitle}</p>
                   </div>
-                  <p className="font-bold text-xs sm:text-sm text-slate-900 shrink-0 self-end sm:self-auto">
-                    Rs {Number(p.base_price).toLocaleString()}
-                  </p>
+
+                  {hasDiscount ? (
+                    <div className="flex flex-col items-end shrink-0 self-end sm:self-auto">
+                      <p className="font-extrabold text-xs sm:text-sm text-red-600">
+                        Rs {effectivePrice.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 line-through">
+                        Rs {Number(p.base_price).toLocaleString()}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="font-bold text-xs sm:text-sm text-slate-900 shrink-0 self-end sm:self-auto">
+                      Rs {Number(p.base_price).toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
             );

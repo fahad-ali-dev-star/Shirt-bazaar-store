@@ -13,6 +13,7 @@ export type Product = {
   slug: string;
   description: string | null;
   base_price: number;
+  discount_percent: number;
   category: string | null;
   is_active: boolean;
   created_at: string;
@@ -150,11 +151,11 @@ export type Database = {
   };
 };
 
-export type ProductCard = Pick<Product, "id" | "name" | "slug" | "base_price"> & {
+export type ProductCard = Pick<Product, "id" | "name" | "slug" | "base_price" | "discount_percent"> & {
   product_images: Pick<ProductImage, "url" | "position">[];
 };
 
-export type ProductDetails = Pick<Product, "id" | "name" | "description" | "base_price"> & {
+export type ProductDetails = Pick<Product, "id" | "name" | "description" | "base_price" | "discount_percent"> & {
   product_images: Pick<ProductImage, "url" | "position">[];
   product_variants: Pick<ProductVariant, "id" | "size" | "color" | "stock_qty" | "price_override">[];
 };
@@ -196,7 +197,7 @@ export type AdminOrder = Pick<
   order_items: OrderItemWithProduct[];
 };
 
-export type AdminProduct = Pick<Product, "id" | "name" | "slug" | "description" | "base_price" | "category" | "is_active"> & {
+export type AdminProduct = Pick<Product, "id" | "name" | "slug" | "description" | "base_price" | "discount_percent" | "category" | "is_active"> & {
   product_images: ProductImage[];
   product_variants: ProductVariant[];
 };

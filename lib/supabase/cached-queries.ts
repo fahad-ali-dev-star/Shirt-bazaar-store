@@ -7,6 +7,7 @@ export interface HomeProductItem {
   slug: string;
   category?: string | null;
   base_price: number;
+  discount_percent?: number;
   product_images: { url: string; position: number }[];
 }
 
@@ -33,6 +34,7 @@ export interface ProductDetailItem {
   description: string | null;
   category: string | null;
   base_price: number;
+  discount_percent?: number;
   product_images: { url: string; position: number }[];
   product_variants: {
     id: string;
@@ -279,7 +281,7 @@ export async function getCachedHomeProducts(): Promise<HomeProductItem[]> {
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, slug, category, base_price, product_images(url, position)")
+        .select("id, name, slug, category, base_price, discount_percent, product_images(url, position)")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(48);
@@ -320,7 +322,7 @@ export async function getCachedProductBySlug(slug: string): Promise<ProductDetai
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, slug, description, category, base_price, product_images(url, position), product_variants(id, size, color, stock_qty, price_override)"
+          "id, name, slug, description, category, base_price, discount_percent, product_images(url, position), product_variants(id, size, color, stock_qty, price_override)"
         )
         .eq("slug", slug)
         .eq("is_active", true)
@@ -361,7 +363,7 @@ export async function getCachedCategoryProducts(slug: string): Promise<HomeProdu
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, slug, base_price, category, product_images(url, position)")
+        .select("id, name, slug, base_price, discount_percent, category, product_images(url, position)")
         .ilike("category", normalizedCategory)
         .eq("is_active", true)
         .order("created_at", { ascending: false })
@@ -399,7 +401,7 @@ export async function searchProducts(q: string): Promise<HomeProductItem[]> {
       const supabase = createPublicClient();
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, slug, category, base_price, product_images(url, position)")
+        .select("id, name, slug, category, base_price, discount_percent, product_images(url, position)")
         .eq("is_active", true)
         .or(`name.ilike.%${cleanQ}%,category.ilike.%${cleanQ}%,description.ilike.%${cleanQ}%`)
         .order("created_at", { ascending: false })

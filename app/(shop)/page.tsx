@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { HeroBanner } from "@/components/hero-banner";
 import { WishlistButton } from "@/components/wishlist-button";
+import { getEffectivePrice } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -119,6 +120,8 @@ export default async function HomePage({ searchParams }: Props) {
                 null
               );
               const isNew = idx < 4;
+              const hasDiscount = (p.discount_percent || 0) > 0;
+              const effectivePrice = getEffectivePrice(p.base_price, p.discount_percent);
 
               return (
                 <Link
@@ -145,11 +148,15 @@ export default async function HomePage({ searchParams }: Props) {
 
                     {/* Badges */}
                     <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex flex-col gap-1.5 z-10">
-                      {isNew && (
+                      {hasDiscount ? (
+                        <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black tracking-wider bg-red-600 text-white shadow-xs">
+                          -{p.discount_percent}% OFF
+                        </span>
+                      ) : isNew ? (
                         <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold tracking-wider bg-brand-600 text-white shadow-xs">
                           NEW
                         </span>
-                      )}
+                      ) : null}
                     </div>
 
                     {/* Wishlist Button (Top Right) */}
@@ -159,7 +166,8 @@ export default async function HomePage({ searchParams }: Props) {
                           productId: p.id,
                           name: p.name,
                           slug: p.slug,
-                          basePrice: Number(p.base_price),
+                          basePrice: p.base_price,
+                          discountPercent: p.discount_percent || 0,
                           image: cover?.url,
                           category: p.category,
                         }}
@@ -186,9 +194,21 @@ export default async function HomePage({ searchParams }: Props) {
                         {p.category ? p.category.replace(/-/g, " ") : "Premium Quality"}
                       </p>
                     </div>
-                    <p className="font-bold text-xs sm:text-sm text-slate-900 shrink-0 self-end sm:self-auto">
-                      Rs {Number(p.base_price).toLocaleString()}
-                    </p>
+
+                    {hasDiscount ? (
+                      <div className="flex flex-col items-end shrink-0 self-end sm:self-auto">
+                        <p className="font-extrabold text-xs sm:text-sm text-red-600">
+                          Rs {effectivePrice.toLocaleString()}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-slate-400 line-through">
+                          Rs {Number(p.base_price).toLocaleString()}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="font-bold text-xs sm:text-sm text-slate-900 shrink-0 self-end sm:self-auto">
+                        Rs {Number(p.base_price).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                 </Link>
               );

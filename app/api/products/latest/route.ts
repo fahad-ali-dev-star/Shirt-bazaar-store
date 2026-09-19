@@ -8,7 +8,7 @@ export async function GET() {
     const supabase = createPublicClient();
     const { data: products, error } = await supabase
       .from("products")
-      .select("id, name, slug, base_price, category, created_at, product_images(url, position)")
+      .select("id, name, slug, base_price, discount_percent, category, created_at, product_images(url, position)")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(6);
@@ -28,6 +28,7 @@ export async function GET() {
         name: p.name,
         slug: p.slug,
         base_price: p.base_price,
+        discount_percent: p.discount_percent || 0,
         category: p.category,
         created_at: p.created_at,
         image_url: sortedImages[0]?.url || "/logo.svg",

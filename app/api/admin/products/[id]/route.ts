@@ -50,12 +50,30 @@ export async function PATCH(
   const payload = parseJsonObject(body);
   const result = validateProductInput(payload, true);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
-  const { name, description, base_price, category, is_active, images, variants } = result.value;
+  const { name, description, base_price, discount_percent, category, is_active, images, variants } = result.value;
 
   const supabase = createAdminClient();
+
+  // Build update payload using only defined fields (typed explicitly for Supabase compatibility)
+  type ProductUpdate = {
+    name?: string;
+    description?: string | null;
+    base_price?: number;
+    discount_percent?: number;
+    category?: string | null;
+    is_active?: boolean;
+  };
+  const updateData: ProductUpdate = {};
+  if (name !== undefined) updateData.name = name;
+  if (description !== undefined) updateData.description = description;
+  if (base_price !== undefined) updateData.base_price = base_price;
+  if (discount_percent !== undefined) updateData.discount_percent = discount_percent;
+  if (category !== undefined) updateData.category = category;
+  if (is_active !== undefined) updateData.is_active = is_active;
+
   const { data: product, error } = await supabase
     .from("products")
-    .update({ name, description, base_price, category, is_active })
+    .update(updateData)
     .eq("id", id)
     .select("slug")
     .single();

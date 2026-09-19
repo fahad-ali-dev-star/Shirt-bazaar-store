@@ -14,7 +14,7 @@ export async function GET() {
     const supabase = createAdminClient();
     const { data: products, error } = await supabase
       .from("products")
-      .select("id, name, slug, base_price, category, is_active, created_at, product_variants(id, size, color, sku, stock_qty, price_override), product_images(url, position)")
+      .select("id, name, slug, base_price, discount_percent, category, is_active, created_at, product_variants(id, size, color, sku, stock_qty, price_override), product_images(url, position)")
       .order("created_at", { ascending: false })
       .limit(200);
 
@@ -42,14 +42,22 @@ export async function POST(req: NextRequest) {
     const payload = parseJsonObject(body);
     const result = validateProductInput(payload, false);
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: 400 });
-    const { name, slug, description, base_price, category, is_active, variants, images } = result.value;
+    const { name, slug, description, base_price, discount_percent, category, is_active, variants, images } = result.value;
     if (!slug) return NextResponse.json({ error: "Invalid product slug" }, { status: 400 });
 
     const supabase = createAdminClient();
 
     const { data: product, error } = await supabase
       .from("products")
-      .insert({ name, slug, description, base_price, category, is_active: is_active ?? true })
+      .insert({
+        name,
+        slug,
+        description,
+        base_price,
+        discount_percent: discount_percent ?? 0,
+        category,
+        is_active: is_active ?? true,
+      })
       .select()
       .single();
 

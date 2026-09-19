@@ -262,6 +262,7 @@ function AdminLoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
+                  suppressHydrationWarning
                   className="w-full rounded-lg border border-slate-800 bg-slate-950 py-3 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-600 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">
@@ -316,6 +317,7 @@ function AdminLoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
+                  suppressHydrationWarning
                   className="w-full rounded-lg border border-slate-800 bg-slate-950 py-3 pl-10 pr-4 text-sm text-slate-200 placeholder-slate-600 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">
@@ -350,6 +352,7 @@ function AdminLoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
+                  suppressHydrationWarning
                   className="w-full rounded-lg border border-slate-800 bg-slate-950 py-3 pl-10 pr-10 text-sm text-slate-200 placeholder-slate-600 outline-none transition-all duration-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
                 />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600">

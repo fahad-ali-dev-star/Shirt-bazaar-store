@@ -22,6 +22,7 @@ import { logServerError } from "@/lib/api/errors";
 
 import { calculateShipping } from "@/lib/payments/shipping";
 import { hasUserClaimedOffer } from "@/lib/payments/offers";
+import { getEffectivePrice } from "@/lib/pricing";
 
 // Standard preset discount mappings
 const STANDARD_CODES: Record<string, number> = {
@@ -162,15 +163,20 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminClient();
   const { data: variants } = await supabase
     .from("product_variants")
-    .select("id, price_override, products(base_price, is_active)")
+    .select("id, price_override, products(base_price, discount_percent, is_active)")
     .in("id", variantIds);
 
   let actualSubtotal = 0;
   if (variants && variants.length > 0) {
     for (const item of normalizedItems) {
       const v = variants.find((variant) => variant.id === item.variantId);
-      const product = Array.isArray(v?.products) ? v?.products[0] : v?.products;
-      const price = v?.price_override ?? product?.base_price ?? 2000;
+      const product = (Array.isArray(v?.products) ? v?.products[0] : v?.products) as {
+        base_price: number;
+        discount_percent?: number;
+        is_active: boolean;
+      } | undefined;
+      const baseItemPrice = v?.price_override ?? product?.base_price ?? 2000;
+      const price = getEffectivePrice(baseItemPrice, product?.discount_percent);
       actualSubtotal += price * item.qty;
     }
   } else {

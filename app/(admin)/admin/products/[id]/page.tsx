@@ -16,14 +16,17 @@ import {
   DollarSign,
   Tag,
   ExternalLink,
+  Percent,
 } from "lucide-react";
+import { getEffectivePrice, getSavingsAmount } from "@/lib/pricing";
 
 type VariantDraft = Omit<Pick<ProductVariant, "id" | "size" | "color" | "sku" | "stock_qty" | "price_override">, "id"> & {
   id?: string;
 };
 
-type ProductDraft = Omit<AdminProduct, "base_price" | "product_variants"> & {
+type ProductDraft = Omit<AdminProduct, "base_price" | "discount_percent" | "product_variants"> & {
   base_price: number | string;
+  discount_percent: number | string;
   product_variants: VariantDraft[];
 };
 
@@ -217,6 +220,7 @@ export default function EditProductPage() {
           name: product.name,
           description: product.description,
           base_price: Number(product.base_price),
+          discount_percent: Number(product.discount_percent) || 0,
           category: product.category ? product.category.trim() : null,
           is_active: product.is_active,
           images,
@@ -433,15 +437,22 @@ export default function EditProductPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-slate-500" />
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Pricing</h2>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-slate-500" />
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Pricing & Discount</h2>
+              </div>
+              {Number(product.discount_percent) > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-200 px-2.5 py-0.5 text-xs font-bold text-red-700">
+                  <Percent size={12} /> {product.discount_percent}% OFF ACTIVE
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Base Price (Rs PKR) <span className="text-red-500">*</span>
+                  Base / Original Price (Rs) <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">
@@ -453,11 +464,85 @@ export default function EditProductPage() {
                     min={0}
                     value={product.base_price}
                     onChange={(e) => setProduct({ ...product, base_price: e.target.value })}
+                    placeholder="2500"
                     className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none transition shadow-xs font-semibold"
                   />
                 </div>
+                <p className="text-[11px] text-slate-400 mt-1">Regular catalog price before discount.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Discount Percentage (%)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">
+                    %
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={product.discount_percent ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value ? parseInt(e.target.value, 10) : 0;
+                      setProduct({
+                        ...product,
+                        discount_percent: Math.min(Math.max(isNaN(val) ? 0 : val, 0), 100),
+                      });
+                    }}
+                    placeholder="0"
+                    className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-black focus:outline-none transition shadow-xs font-semibold"
+                  />
+                </div>
+                <div className="flex gap-1.5 mt-1.5">
+                  {[0, 10, 15, 20, 25, 30, 50].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => setProduct({ ...product, discount_percent: pct })}
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border transition ${
+                        Number(product.discount_percent) === pct
+                          ? "bg-slate-900 text-white border-slate-900"
+                          : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                      }`}
+                    >
+                      {pct === 0 ? "None" : `${pct}%`}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+
+            {/* Live Price Calculation Preview */}
+            {product.base_price && Number(product.base_price) > 0 && (
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div>
+                  <span className="text-slate-500">Customer Selling Price:</span>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="text-base font-bold text-slate-950">
+                      Rs {getEffectivePrice(Number(product.base_price), Number(product.discount_percent)).toLocaleString()}
+                    </span>
+                    {Number(product.discount_percent) > 0 && (
+                      <span className="text-slate-400 line-through">
+                        Rs {Number(product.base_price).toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {Number(product.discount_percent) > 0 ? (
+                  <div className="text-right">
+                    <span className="font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full inline-block">
+                      Customer saves Rs {getSavingsAmount(Number(product.base_price), Number(product.discount_percent)).toLocaleString()} ({product.discount_percent}% OFF)
+                    </span>
+                    <p className="text-[10px] text-slate-400 mt-1">Crossed out price & badge will show on home screen</p>
+                  </div>
+                ) : (
+                  <span className="text-slate-400 text-[11px]">No discount applied (Full Price)</span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">

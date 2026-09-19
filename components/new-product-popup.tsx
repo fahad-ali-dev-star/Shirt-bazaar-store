@@ -5,11 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Flame, X, ArrowRight, Sparkles } from "lucide-react";
 
+import { getEffectivePrice } from "@/lib/pricing";
+
 interface LatestProduct {
   id: string;
   name: string;
   slug: string;
   base_price: number;
+  discount_percent?: number;
   category: string | null;
   created_at: string;
   image_url: string;
@@ -83,6 +86,9 @@ export function NewProductPopup() {
 
   if (!product || !isVisible) return null;
 
+  const hasDiscount = (product.discount_percent || 0) > 0;
+  const effectivePrice = getEffectivePrice(product.base_price, product.discount_percent);
+
   return (
     <div className="fixed top-16 left-3 right-3 sm:left-auto sm:right-6 sm:top-20 sm:max-w-md z-50 animate-in fade-in slide-in-from-top-6 duration-500">
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 p-4 text-white shadow-2xl shadow-red-600/40 ring-2 ring-red-400/50">
@@ -106,7 +112,7 @@ export function NewProductPopup() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-300" />
           </span>
           <span className="inline-flex items-center gap-1 text-[11px] font-black uppercase tracking-wider text-amber-200">
-            <Flame size={13} className="text-amber-300 animate-bounce" /> New Product Added!
+            <Flame size={13} className="text-amber-300 animate-bounce" /> {hasDiscount ? `Special Offer: -${product.discount_percent}% OFF!` : "New Product Added!"}
           </span>
         </div>
 
@@ -128,10 +134,15 @@ export function NewProductPopup() {
             <p className="text-xs font-bold text-white truncate drop-shadow-sm">
               {product.name}
             </p>
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-baseline gap-1.5 mt-0.5 flex-wrap">
               <span className="text-xs font-extrabold text-amber-300">
-                Rs. {product.base_price?.toLocaleString()}
+                Rs. {effectivePrice.toLocaleString()}
               </span>
+              {hasDiscount && (
+                <span className="text-[10px] text-white/60 line-through">
+                  Rs. {Number(product.base_price).toLocaleString()}
+                </span>
+              )}
               {product.category && (
                 <span className="text-[10px] text-white/70 uppercase tracking-wider capitalize">
                   • {product.category.replace("-", " ")}

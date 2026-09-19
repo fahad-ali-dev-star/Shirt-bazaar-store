@@ -45,6 +45,7 @@ export type ProductInput = {
   slug?: string;
   description?: string | null;
   base_price?: number;
+  discount_percent?: number;
   category?: string | null;
   is_active?: boolean;
   variants?: ProductVariantInput[];
@@ -265,7 +266,7 @@ function validateVariant(value: unknown): value is ProductVariantInput {
 export function validateProductInput(value: unknown, partial = false): { ok: true; value: ProductInput } | { ok: false; error: string } {
   if (!value || typeof value !== "object" || Array.isArray(value)) return { ok: false, error: "Invalid product payload" };
   const input = value as Record<string, unknown>;
-  const allowed = ["name", "slug", "description", "base_price", "category", "is_active", "variants", "images"];
+  const allowed = ["name", "slug", "description", "base_price", "discount_percent", "category", "is_active", "variants", "images"];
   if (Object.keys(input).some((key) => !allowed.includes(key))) return { ok: false, error: "Invalid product fields" };
 
   if (!partial || input.name !== undefined) {
@@ -274,6 +275,15 @@ export function validateProductInput(value: unknown, partial = false): { ok: tru
   if (input.slug !== undefined && !isSlug(input.slug)) return { ok: false, error: "Invalid product slug" };
   if (!partial || input.base_price !== undefined) {
     if (!isNonNegativeMoney(input.base_price)) return { ok: false, error: "Invalid base price" };
+  }
+  if (input.discount_percent !== undefined && input.discount_percent !== null) {
+    if (
+      !Number.isInteger(input.discount_percent) ||
+      (input.discount_percent as number) < 0 ||
+      (input.discount_percent as number) > 100
+    ) {
+      return { ok: false, error: "Discount percentage must be an integer between 0 and 100" };
+    }
   }
   if (!isOptionalText(input.description, MAX_DESCRIPTION)) return { ok: false, error: "Invalid description" };
   if (!isOptionalText(input.category, MAX_CATEGORY)) return { ok: false, error: "Invalid category" };
@@ -314,10 +324,40 @@ export function validateProductInput(value: unknown, partial = false): { ok: tru
       slug: input.slug === undefined ? undefined : (input.slug as string).trim(),
       description: input.description === undefined ? undefined : input.description === null ? null : (input.description as string).trim(),
       base_price: input.base_price as number,
+      discount_percent: input.discount_percent === undefined || input.discount_percent === null ? 0 : Number(input.discount_percent),
       category: input.category === undefined ? undefined : input.category === null ? null : (input.category as string).trim(),
       is_active: input.is_active as boolean | undefined,
       variants,
       images,
+    },
+  };
+}
+
+export function validateCategoryDiscountInput(value: unknown): {
+  ok: true;
+  value: { category: string; discount_percent: number };
+} | { ok: false; error: string } {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return { ok: false, error: "Invalid payload" };
+  }
+  const input = value as Record<string, unknown>;
+  if (typeof input.category !== "string" || !input.category.trim() || input.category.trim().length > MAX_CATEGORY) {
+    return { ok: false, error: "Please provide a valid category name" };
+  }
+  if (
+    typeof input.discount_percent !== "number" ||
+    !Number.isInteger(input.discount_percent) ||
+    input.discount_percent < 0 ||
+    input.discount_percent > 100
+  ) {
+    return { ok: false, error: "Discount percentage must be an integer between 0 and 100" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      category: input.category.trim(),
+      discount_percent: input.discount_percent,
     },
   };
 }

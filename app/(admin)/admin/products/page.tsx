@@ -15,7 +15,13 @@ import {
   Boxes,
   Eye,
   EyeOff,
+  Percent,
+  Tag,
+  Sparkles,
+  RefreshCw,
+  X,
 } from "lucide-react";
+import { getEffectivePrice } from "@/lib/pricing";
 
 type ProductVariant = {
   id: string;
@@ -36,6 +42,7 @@ type Product = {
   name: string;
   slug: string;
   base_price: number;
+  discount_percent: number;
   category: string | null;
   is_active: boolean;
   created_at?: string;
@@ -43,7 +50,7 @@ type Product = {
   product_images?: ProductImage[];
 };
 
-type FilterTab = "all" | "active" | "draft" | "low_stock";
+type FilterTab = "all" | "active" | "discounted" | "draft" | "low_stock";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -52,6 +59,13 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Category Bulk Discount Tool Modal State
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [targetCategory, setTargetCategory] = useState("All");
+  const [bulkDiscountVal, setBulkDiscountVal] = useState<number>(20);
+  const [applyingBulk, setApplyingBulk] = useState(false);
+  const [bulkSuccessMsg, setBulkSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/products")
@@ -101,14 +115,62 @@ export default function AdminProductsPage() {
     }
   }
 
+  async function handleApplyCategoryDiscount(discount: number) {
+    setApplyingBulk(true);
+    setError(null);
+    setBulkSuccessMsg(null);
+
+    try {
+      const res = await fetch("/api/admin/discounts/category", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: targetCategory,
+          discount_percent: discount,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to apply category discount");
+      }
+
+      const json = await res.json();
+      setProducts((prev) =>
+        prev.map((p) => {
+          if (targetCategory.toLowerCase() === "all" || (p.category && p.category.toLowerCase() === targetCategory.toLowerCase())) {
+            return { ...p, discount_percent: discount };
+          }
+          return p;
+        })
+      );
+
+      setBulkSuccessMsg(
+        discount > 0
+          ? `Successfully applied ${discount}% discount to ${json.affectedCount || 0} product(s) in "${targetCategory}"!`
+          : `Successfully reset discount to 0% for ${json.affectedCount || 0} product(s) in "${targetCategory}".`
+      );
+      setTimeout(() => {
+        setBulkSuccessMsg(null);
+        setShowCategoryModal(false);
+      }, 2500);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error applying discount");
+    } finally {
+      setApplyingBulk(false);
+    }
+  }
+
   // Summary Metrics
   const metrics = useMemo(() => {
     let totalStock = 0;
     let lowStockCount = 0;
     let activeCount = 0;
+    let discountedCount = 0;
 
     for (const p of products) {
       if (p.is_active) activeCount++;
+      if (p.is_active && (p.discount_percent || 0) > 0) discountedCount++;
       const stock = p.product_variants?.reduce((sum, v) => sum + (v.stock_qty || 0), 0) ?? 0;
       totalStock += stock;
       if (stock <= 5) lowStockCount++;
@@ -117,10 +179,20 @@ export default function AdminProductsPage() {
     return {
       totalProducts: products.length,
       activeCount,
+      discountedCount,
       draftCount: products.length - activeCount,
       lowStockCount,
       totalStock,
     };
+  }, [products]);
+
+  // Unique categories list
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of products) {
+      if (p.category) set.add(p.category.trim());
+    }
+    return Array.from(set).sort();
   }, [products]);
 
   // Filtered Products
@@ -130,6 +202,7 @@ export default function AdminProductsPage() {
 
       // Tab filter
       if (activeTab === "active" && !p.is_active) return false;
+      if (activeTab === "discounted" && (!p.is_active || (p.discount_percent || 0) === 0)) return false;
       if (activeTab === "draft" && p.is_active) return false;
       if (activeTab === "low_stock" && totalStock > 5) return false;
 
@@ -180,20 +253,30 @@ export default function AdminProductsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Products</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Manage your shirt catalog, inventory stock levels, and pricing.
+            Manage your shirt catalog, inventory stock levels, category promotions, and pricing.
           </p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add product</span>
-        </Link>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setShowCategoryModal(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700 shadow-xs hover:bg-brand-100 hover:border-brand-300 transition-colors"
+          >
+            <Tag className="h-4 w-4 text-brand-600" />
+            <span>Category Discount Tool</span>
+          </button>
+          <Link
+            href="/admin/products/new"
+            className="inline-flex items-center gap-2 rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add product</span>
+          </Link>
+        </div>
       </div>
 
       {/* KPI Metrics Summary Bar (Shopify Analytics Bar) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
           <div className="flex items-center gap-1.5 sm:gap-2 text-slate-500 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
             <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" />
@@ -211,14 +294,22 @@ export default function AdminProductsPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-red-700 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
+            <Percent className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-600" />
+            <span className="truncate">On Discount</span>
+          </div>
+          <p className="text-xl sm:text-2xl font-bold text-red-600 mt-1">{metrics.discountedCount}</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
           <div className="flex items-center gap-1.5 sm:gap-2 text-amber-700 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600" />
-            <span className="truncate">Low / Out of Stock</span>
+            <span className="truncate">Low Stock</span>
           </div>
           <p className="text-xl sm:text-2xl font-bold text-slate-900 mt-1">{metrics.lowStockCount}</p>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-xs col-span-2 sm:col-span-1">
           <div className="flex items-center gap-1.5 sm:gap-2 text-blue-700 text-[11px] sm:text-xs font-medium uppercase tracking-wider">
             <Boxes className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600" />
             <span className="truncate">Total Stock Units</span>
@@ -252,6 +343,16 @@ export default function AdminProductsPage() {
               }`}
             >
               Active ({metrics.activeCount})
+            </button>
+            <button
+              onClick={() => setActiveTab("discounted")}
+              className={`rounded-lg px-2.5 sm:px-3 py-1.5 font-medium whitespace-nowrap transition-colors ${
+                activeTab === "discounted"
+                  ? "bg-red-100 text-red-900 font-semibold"
+                  : "text-slate-500 hover:text-slate-900"
+              }`}
+            >
+              Discounted ({metrics.discountedCount})
             </button>
             <button
               onClick={() => setActiveTab("draft")}
@@ -323,7 +424,7 @@ export default function AdminProductsPage() {
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Inventory</th>
                   <th className="py-3 px-4">Category</th>
-                  <th className="py-3 px-4">Price</th>
+                  <th className="py-3 px-4">Price & Discount</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -333,6 +434,8 @@ export default function AdminProductsPage() {
                   const thumbnail = sortedImages[0]?.url;
                   const totalStock = p.product_variants?.reduce((sum, v) => sum + (v.stock_qty || 0), 0) ?? 0;
                   const variantCount = p.product_variants?.length ?? 0;
+                  const hasDiscount = (p.discount_percent || 0) > 0;
+                  const effectivePrice = getEffectivePrice(p.base_price, p.discount_percent);
 
                   return (
                     <tr key={p.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -344,6 +447,11 @@ export default function AdminProductsPage() {
                               <Image src={thumbnail} alt={p.name} fill className="object-cover" sizes="48px" />
                             ) : (
                               <Package className="h-5 w-5 text-slate-400" />
+                            )}
+                            {hasDiscount && (
+                              <span className="absolute top-1 left-1 bg-red-600 text-white text-[9px] font-black px-1 py-0.2 rounded">
+                                -{p.discount_percent}%
+                              </span>
                             )}
                           </div>
                           <div>
@@ -408,9 +516,27 @@ export default function AdminProductsPage() {
                         </span>
                       </td>
 
-                      {/* Price */}
-                      <td className="py-3 px-4 font-semibold text-slate-900">
-                        Rs {Number(p.base_price).toLocaleString()}
+                      {/* Price & Discount */}
+                      <td className="py-3 px-4">
+                        {hasDiscount ? (
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-red-700">
+                                Rs {effectivePrice.toLocaleString()}
+                              </span>
+                              <span className="rounded bg-red-50 text-red-700 border border-red-200 px-1.5 py-0.2 text-[10px] font-bold">
+                                -{p.discount_percent}%
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-400 line-through">
+                              Rs {Number(p.base_price).toLocaleString()}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-semibold text-slate-900">
+                            Rs {Number(p.base_price).toLocaleString()}
+                          </span>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -428,7 +554,7 @@ export default function AdminProductsPage() {
                         <Link
                           href={`/admin/products/${p.id}`}
                           className="inline-flex items-center justify-center p-1.5 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-blue-50 transition"
-                          title="Edit product"
+                          title="Edit product & discount"
                         >
                           <Edit3 className="h-4 w-4" />
                         </Link>
@@ -449,6 +575,126 @@ export default function AdminProductsPage() {
           </div>
         )}
       </div>
+
+      {/* ── Category Bulk Discount Modal ── */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-slate-100 animate-slide-up space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                  <Tag size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Bulk Category Discount</h3>
+                  <p className="text-xs text-slate-500">Apply or clear discount for an entire shirt category</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCategoryModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {bulkSuccessMsg && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+                <span>{bulkSuccessMsg}</span>
+              </div>
+            )}
+
+            <div className="space-y-3.5 text-xs">
+              <div>
+                <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Target Category
+                </label>
+                <select
+                  value={targetCategory}
+                  onChange={(e) => setTargetCategory(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-900 focus:border-black focus:outline-none"
+                >
+                  <option value="All">All Categories (Storewide)</option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Discount Percentage (%)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={bulkDiscountVal}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setBulkDiscountVal(Math.min(Math.max(isNaN(v) ? 0 : v, 0), 100));
+                    }}
+                    className="w-28 rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-900 focus:border-black focus:outline-none"
+                  />
+                  <div className="flex flex-wrap gap-1">
+                    {[10, 15, 20, 25, 30, 50].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setBulkDiscountVal(pct)}
+                        className={`px-2.5 py-1 rounded-lg font-semibold border transition ${
+                          bulkDiscountVal === pct
+                            ? "bg-brand-600 text-white border-brand-600"
+                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-slate-50 p-3 border border-slate-100 text-[11px] text-slate-600 space-y-1">
+                <p>
+                  ⚡ When applied, all active products in <strong>&ldquo;{targetCategory}&rdquo;</strong> will show this discount badge and cut previous price on the home screen and storefront.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={applyingBulk}
+                onClick={() => handleApplyCategoryDiscount(0)}
+                className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+              >
+                Clear Discount (0%)
+              </button>
+              <button
+                type="button"
+                disabled={applyingBulk}
+                onClick={() => handleApplyCategoryDiscount(bulkDiscountVal)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-50 transition shadow-xs"
+              >
+                {applyingBulk ? (
+                  <>
+                    <RefreshCw size={12} className="animate-spin" />
+                    <span>Applying...</span>
+                  </>
+                ) : (
+                  <span>Apply {bulkDiscountVal}% Discount</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
