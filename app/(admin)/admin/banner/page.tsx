@@ -33,6 +33,8 @@ interface BannerConfig {
   secondary_cta_text: string;
   secondary_cta_link: string;
   overlay_opacity: number;
+  banner_height: "screen" | "tall" | "standard";
+  image_fit: "cover" | "contain";
 }
 
 const PRESET_BANNERS = [
@@ -66,6 +68,8 @@ const DEFAULT_BANNER: BannerConfig = {
   secondary_cta_text: "Explore Oversized",
   secondary_cta_link: "/category/oversized",
   overlay_opacity: 50,
+  banner_height: "tall",
+  image_fit: "cover",
 };
 
 export default function AdminBannerPage() {
@@ -106,6 +110,8 @@ export default function AdminBannerPage() {
                 secondary_cta_text: b.secondary_cta_text || "",
                 secondary_cta_link: b.secondary_cta_link || "",
                 overlay_opacity: b.overlay_opacity ?? 50,
+                banner_height: (b.banner_height as BannerConfig["banner_height"]) || "tall",
+                image_fit: (b.image_fit as BannerConfig["image_fit"]) || "cover",
               }))
             : [DEFAULT_BANNER];
 
@@ -145,6 +151,8 @@ export default function AdminBannerPage() {
       secondary_cta_text: "View All",
       secondary_cta_link: "/#products",
       overlay_opacity: 50,
+      banner_height: "tall",
+      image_fit: "cover",
     };
 
     setBanners((prev) => [...prev, newBanner]);
@@ -672,6 +680,98 @@ export default function AdminBannerPage() {
                 className="w-full accent-black cursor-pointer"
               />
             </div>
+
+            {/* Frame Controls */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-5">
+              <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                <Sliders size={14} className="text-brand-600" />
+                Frame Controls
+              </h3>
+
+              {/* Banner Height */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                  Banner Height
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      { value: "standard", label: "Standard", px: "380 px", icon: "▬" },
+                      { value: "tall",     label: "Tall",     px: "520 px", icon: "▮" },
+                      { value: "screen",   label: "Screen",   px: "≤700 px", icon: "⬛" },
+                    ] as const
+                  ).map(({ value, label, px, icon }) => {
+                    const isSelected = currentBanner.banner_height === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => updateCurrentBanner({ banner_height: value })}
+                        className={`flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-3 text-center transition ${
+                          isSelected
+                            ? "border-slate-900 bg-slate-900 text-white"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                        }`}
+                      >
+                        <span className="text-lg leading-none">{icon}</span>
+                        <span className="text-[11px] font-bold">{label}</span>
+                        <span className={`text-[10px] font-mono ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+                          {px}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-2">
+                  Controls how tall the hero section appears on the homepage.
+                </p>
+              </div>
+
+              {/* Image Fit */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                  Image Fit
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      {
+                        value: "cover",
+                        label: "Cover (Fill)",
+                        desc: "Fills the frame — edges may crop",
+                        icon: "⬛",
+                      },
+                      {
+                        value: "contain",
+                        label: "Contain (Fit)",
+                        desc: "Full image visible — letterboxed",
+                        icon: "◻",
+                      },
+                    ] as const
+                  ).map(({ value, label, desc, icon }) => {
+                    const isSelected = currentBanner.image_fit === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => updateCurrentBanner({ image_fit: value })}
+                        className={`flex flex-col items-start gap-1 rounded-xl border-2 px-3.5 py-3 text-left transition ${
+                          isSelected
+                            ? "border-slate-900 bg-slate-900 text-white"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400"
+                        }`}
+                      >
+                        <span className="text-base">{icon}</span>
+                        <span className="text-[11px] font-bold">{label}</span>
+                        <span className={`text-[10px] leading-snug ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+                          {desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </form>
         </div>
 
@@ -694,64 +794,82 @@ export default function AdminBannerPage() {
             </div>
 
             {/* Banner Screen Mockup */}
-            <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner flex items-center justify-center text-white">
-              <Image
-                src={previewBanner.image_url || "/hero_banner.png"}
-                alt={previewBanner.title}
-                fill
-                className="object-cover transition-all duration-700"
-                unoptimized
-              />
+            {(() => {
+              const previewAspect =
+                currentBanner.banner_height === "screen"
+                  ? "aspect-[16/9]"
+                  : currentBanner.banner_height === "standard"
+                  ? "aspect-[16/6.5]"
+                  : "aspect-[16/8.5]"; // tall (default)
+              const previewFit =
+                currentBanner.image_fit === "contain" ? "object-contain" : "object-cover";
 
-              {/* Overlay */}
-              <div
-                className="absolute inset-0 bg-black"
-                style={{ opacity: previewBanner.overlay_opacity / 100 }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
+              return (
+                <div className={`relative ${previewAspect} rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner flex items-center justify-center text-white transition-all duration-500`}>
+                  <Image
+                    src={previewBanner.image_url || "/hero_banner.png"}
+                    alt={previewBanner.title}
+                    fill
+                    className={`${previewFit} transition-all duration-700`}
+                    unoptimized
+                  />
 
-              {/* Content Preview */}
-              <div className="relative z-10 p-5 w-full flex flex-col justify-center h-full">
-                {previewBanner.badge_text && (
-                  <span className="text-[9px] font-bold tracking-widest uppercase text-emerald-400 mb-1">
-                    {previewBanner.badge_text}
+                  {/* Overlay */}
+                  <div
+                    className="absolute inset-0 bg-black"
+                    style={{ opacity: previewBanner.overlay_opacity / 100 }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
+
+                  {/* Height badge */}
+                  <span className="absolute top-2 right-2 z-20 bg-black/50 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full border border-white/10 uppercase tracking-wide">
+                    {currentBanner.banner_height} · {currentBanner.image_fit}
                   </span>
-                )}
-                <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight line-clamp-2 mb-1 drop-shadow">
-                  {previewBanner.title}
-                </h2>
-                <p className="text-[10px] text-slate-300 line-clamp-2 mb-3 max-w-xs font-light">
-                  {previewBanner.subtitle}
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="bg-white text-slate-900 px-2.5 py-1 rounded text-[10px] font-bold flex items-center gap-1 shadow">
-                    <span>{previewBanner.cta_text || "Shop"}</span>
-                    <ArrowRight size={10} />
-                  </span>
-                  {previewBanner.secondary_cta_text && (
-                    <span className="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded text-[10px] font-medium">
-                      {previewBanner.secondary_cta_text}
-                    </span>
+
+                  {/* Content Preview */}
+                  <div className="relative z-10 p-5 w-full flex flex-col justify-center h-full">
+                    {previewBanner.badge_text && (
+                      <span className="text-[9px] font-bold tracking-widest uppercase text-emerald-400 mb-1">
+                        {previewBanner.badge_text}
+                      </span>
+                    )}
+                    <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight line-clamp-2 mb-1 drop-shadow">
+                      {previewBanner.title}
+                    </h2>
+                    <p className="text-[10px] text-slate-300 line-clamp-2 mb-3 max-w-xs font-light">
+                      {previewBanner.subtitle}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-white text-slate-900 px-2.5 py-1 rounded text-[10px] font-bold flex items-center gap-1 shadow">
+                        <span>{previewBanner.cta_text || "Shop"}</span>
+                        <ArrowRight size={10} />
+                      </span>
+                      {previewBanner.secondary_cta_text && (
+                        <span className="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded text-[10px] font-medium">
+                          {previewBanner.secondary_cta_text}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Indicators Mockup */}
+                  {activeBanners.length > 1 && (
+                    <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
+                      {activeBanners.map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setPreviewIndex(i)}
+                          className={`h-1.5 rounded-full transition-all ${
+                            i === previewIndex ? "w-4 bg-white" : "w-1.5 bg-white/40"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   )}
                 </div>
-              </div>
-
-              {/* Indicators Mockup */}
-              {activeBanners.length > 1 && (
-                <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
-                  {activeBanners.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setPreviewIndex(i)}
-                      className={`h-1.5 rounded-full transition-all ${
-                        i === previewIndex ? "w-4 bg-white" : "w-1.5 bg-white/40"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+              );
+            })()}
 
             <p className="text-[11px] text-slate-400 text-center mt-2.5">
               {activeBanners.length > 1

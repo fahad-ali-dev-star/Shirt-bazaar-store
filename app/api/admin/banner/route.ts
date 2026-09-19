@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
       secondary_cta_link,
       overlay_opacity,
       is_active,
+      banner_height,
+      image_fit,
     } = body;
 
     const payload = {
@@ -57,6 +59,8 @@ export async function POST(req: NextRequest) {
       secondary_cta_link: secondary_cta_link || null,
       overlay_opacity: typeof overlay_opacity === "number" ? overlay_opacity : 50,
       is_active: is_active ?? true,
+      banner_height: banner_height || "tall",
+      image_fit: image_fit || "cover",
       updated_at: new Date().toISOString(),
     };
 
@@ -106,6 +110,8 @@ export async function PUT(req: NextRequest) {
       secondary_cta_link,
       overlay_opacity,
       is_active,
+      banner_height,
+      image_fit,
     } = body;
 
     const payload = {
@@ -120,6 +126,8 @@ export async function PUT(req: NextRequest) {
       secondary_cta_link: secondary_cta_link || null,
       overlay_opacity: typeof overlay_opacity === "number" ? overlay_opacity : 50,
       is_active: is_active ?? true,
+      banner_height: banner_height || "tall",
+      image_fit: image_fit || "cover",
       updated_at: new Date().toISOString(),
     };
 

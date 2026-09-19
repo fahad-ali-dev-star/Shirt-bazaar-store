@@ -93,6 +93,8 @@ export type StoreBanner = {
   secondary_cta_text: string | null;
   secondary_cta_link: string | null;
   overlay_opacity: number;
+  banner_height?: "screen" | "tall" | "standard" | null;
+  image_fit?: "cover" | "contain" | null;
   updated_at: string;
 };
 
