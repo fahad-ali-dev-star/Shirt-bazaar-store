@@ -19,6 +19,8 @@ import {
   Upload,
   Link2,
   X,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 
 interface BannerConfig {
@@ -89,6 +91,7 @@ export default function AdminBannerPage() {
 
   // Live preview carousel state
   const [previewIndex, setPreviewIndex] = useState<number>(0);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
   useEffect(() => {
     async function loadBanners() {
@@ -778,34 +781,62 @@ export default function AdminBannerPage() {
         {/* Right Column: Interactive Live Carousel Preview (5 cols) */}
         <div className="lg:col-span-5 space-y-4 sticky top-20">
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 flex-wrap gap-2">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
                 <Eye size={15} className="text-brand-600" />
                 <span>Live Slider Preview</span>
               </div>
-              {activeBanners.length > 1 ? (
-                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-200 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Auto-rotating (4.5s)
-                </span>
-              ) : (
-                <span className="text-[10px] text-slate-400 font-medium">Single Banner Mode</span>
-              )}
+
+              {/* Viewport switch: Desktop / Mobile */}
+              <div className="flex items-center rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-[11px] font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setPreviewDevice("desktop")}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-md transition ${
+                    previewDevice === "desktop"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                  title="Preview Desktop View"
+                >
+                  <Monitor size={12} />
+                  <span>Desktop</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDevice("mobile")}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-md transition ${
+                    previewDevice === "mobile"
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500 hover:text-slate-700"
+                  }`}
+                  title="Preview Mobile View"
+                >
+                  <Smartphone size={12} />
+                  <span>Mobile</span>
+                </button>
+              </div>
             </div>
 
             {/* Banner Screen Mockup */}
             {(() => {
-              const previewAspect =
-                currentBanner.banner_height === "screen"
-                  ? "aspect-[16/9]"
-                  : currentBanner.banner_height === "standard"
-                  ? "aspect-[16/6.5]"
-                  : "aspect-[16/8.5]"; // tall (default)
+              const isMobileView = previewDevice === "mobile";
+              const previewAspect = isMobileView
+                ? "aspect-[9/14] max-w-[280px] mx-auto"
+                : currentBanner.banner_height === "screen"
+                ? "aspect-[16/9]"
+                : currentBanner.banner_height === "standard"
+                ? "aspect-[16/6.5]"
+                : "aspect-[16/8.5]"; // tall (default)
               const previewFit =
                 currentBanner.image_fit === "contain" ? "object-contain" : "object-cover";
 
               return (
-                <div className={`relative ${previewAspect} rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner flex items-center justify-center text-white transition-all duration-500`}>
+                <div
+                  className={`relative ${previewAspect} rounded-xl overflow-hidden bg-slate-950 border ${
+                    isMobileView ? "border-slate-700 ring-4 ring-slate-800/40" : "border-slate-800"
+                  } shadow-inner flex items-center justify-center text-white transition-all duration-500`}
+                >
                   <Image
                     src={previewBanner.image_url || "/hero_banner.png"}
                     alt={previewBanner.title}
@@ -819,7 +850,13 @@ export default function AdminBannerPage() {
                     className="absolute inset-0 bg-black"
                     style={{ opacity: previewBanner.overlay_opacity / 100 }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
+
+                  {/* Gradient: Vertical on mobile simulation, horizontal on desktop */}
+                  {isMobileView ? (
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-black/35" />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
+                  )}
 
                   {/* Height badge */}
                   <span className="absolute top-2 right-2 z-20 bg-black/50 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-0.5 rounded-full border border-white/10 uppercase tracking-wide">
@@ -827,25 +864,25 @@ export default function AdminBannerPage() {
                   </span>
 
                   {/* Content Preview */}
-                  <div className="relative z-10 p-5 w-full flex flex-col justify-center h-full">
+                  <div className={`relative z-10 ${isMobileView ? "p-4" : "p-5"} w-full flex flex-col justify-center h-full`}>
                     {previewBanner.badge_text && (
-                      <span className="text-[9px] font-bold tracking-widest uppercase text-emerald-400 mb-1">
+                      <span className="text-[8px] sm:text-[9px] font-bold tracking-widest uppercase text-emerald-400 mb-1">
                         {previewBanner.badge_text}
                       </span>
                     )}
-                    <h2 className="text-base sm:text-lg font-black tracking-tight leading-tight line-clamp-2 mb-1 drop-shadow">
+                    <h2 className={`${isMobileView ? "text-sm leading-tight" : "text-base sm:text-lg leading-tight"} font-black tracking-tight line-clamp-2 mb-1 drop-shadow`}>
                       {previewBanner.title}
                     </h2>
                     <p className="text-[10px] text-slate-300 line-clamp-2 mb-3 max-w-xs font-light">
                       {previewBanner.subtitle}
                     </p>
-                    <div className="flex items-center gap-2">
-                      <span className="bg-white text-slate-900 px-2.5 py-1 rounded text-[10px] font-bold flex items-center gap-1 shadow">
+                    <div className={`flex ${isMobileView ? "flex-col gap-1.5" : "items-center gap-2"}`}>
+                      <span className="bg-white text-slate-900 px-2.5 py-1 rounded text-[10px] font-bold flex items-center justify-center gap-1 shadow text-center">
                         <span>{previewBanner.cta_text || "Shop"}</span>
                         <ArrowRight size={10} />
                       </span>
                       {previewBanner.secondary_cta_text && (
-                        <span className="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded text-[10px] font-medium">
+                        <span className="bg-white/20 border border-white/30 text-white px-2.5 py-1 rounded text-[10px] font-medium text-center">
                           {previewBanner.secondary_cta_text}
                         </span>
                       )}
@@ -871,11 +908,16 @@ export default function AdminBannerPage() {
               );
             })()}
 
-            <p className="text-[11px] text-slate-400 text-center mt-2.5">
-              {activeBanners.length > 1
-                ? `${activeBanners.length} active banners rotating every 4.5 seconds.`
-                : "1 active banner will display statically on the home screen."}
-            </p>
+            <div className="mt-2.5 flex items-center justify-between text-[11px] text-slate-400">
+              <span>
+                {activeBanners.length > 1
+                  ? `${activeBanners.length} active rotating banners`
+                  : "1 active banner"}
+              </span>
+              <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                Touch swipe enabled on mobile
+              </span>
+            </div>
           </div>
         </div>
       </div>
